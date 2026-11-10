@@ -1,26 +1,176 @@
 @import "tailwindcss";
 
+/* ─── Luxury Obsidian Burgundy Tokens (Vercel/Linear Tier) ──────────────────── */
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  /* Surfaces */
+  --bg-base:           #120909;
+  --bg-surface:        #180d0d;
+  --bg-elevated:       #201111;
+  --bg-drawer:         #0a0505;
+
+  /* Strict Custom Palette */
+  --burgundy-base:     #590907;
+  --burgundy-hover:    #77110f;
+  --cream-base:        #E8D2B5;
+  --cream-muted:       rgba(232, 210, 181, 0.7);
+  --sage-base:         #A5A79B;
+  --sage-muted:        rgba(165, 167, 155, 0.7);
+
+  /* Semantic Typography Colors */
+  --text-primary:      #E8D2B5;
+  --text-secondary:    #A5A79B;
+  --text-muted:        rgba(165, 167, 155, 0.6);
+
+  /* Borders & Accents */
+  --border-subtle:     rgba(165, 167, 155, 0.15);
+  --border-default:    rgba(165, 167, 155, 0.25);
+  --border-active:     rgba(232, 210, 181, 0.4);
+  --border-burgundy:   rgba(89, 9, 7, 0.8);
+
+  /* Fonts */
+  --font-display:      var(--font-syne), 'Syne', sans-serif;
+  --font-heading:      var(--font-space-grotesk), 'Space Grotesk', sans-serif;
+  --font-body:         var(--font-inter), 'Inter', system-ui, sans-serif;
+  --font-mono:         var(--font-space-mono), 'Space Mono', monospace;
 }
 
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --font-sans: var(--font-inter), 'Inter', system-ui, sans-serif;
+  --font-mono: var(--font-space-mono), 'Space Mono', monospace;
+  --color-background: var(--bg-base);
+  --color-foreground: var(--text-primary);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+/* ─── Global Reset & Body ───────────────────────────────────────────────────── */
+* {
+  box-sizing: border-box;
+}
+
+html {
+  color-scheme: dark;
+  scroll-behavior: smooth;
+  background-color: #120909;
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background-color: #120909;
+  color: #E8D2B5;
+  font-family: var(--font-body);
+  font-size: 15px;
+  line-height: 1.65;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+/* ─── Custom Dark Scrollbars ────────────────────────────────────────────────── */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: #120909;
+}
+::-webkit-scrollbar-thumb {
+  background: #590907;
+  border-radius: 999px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #77110f;
+}
+::selection {
+  background: #590907;
+  color: #E8D2B5;
+}
+
+/* Hide scrollbar utility */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+/* ─── Typography & Utilities ────────────────────────────────────────────────── */
+.font-display { font-family: var(--font-display) !important; }
+.font-heading { font-family: var(--font-heading) !important; }
+.font-body    { font-family: var(--font-body) !important; }
+.font-mono    { font-family: var(--font-mono) !important; }
+
+.gradient-text {
+  background: linear-gradient(135deg, #ffffff 0%, #E8D2B5 55%, #A5A79B 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.gradient-text-burgundy {
+  background: linear-gradient(135deg, #E8D2B5 0%, #d8706e 45%, #77110f 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+/* ─── Glassmorphic Surface Classes ─────────────────────────────────────────── */
+.glass-surface {
+  background: rgba(24, 13, 13, 0.85);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(165, 167, 155, 0.15);
+  border-radius: 1rem;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(232, 210, 181, 0.08);
+}
+
+.glass-subcard {
+  background: rgba(18, 9, 9, 0.8);
+  border: 1px solid rgba(165, 167, 155, 0.15);
+  border-radius: 0.75rem;
+}
+
+/* ─── Badges ────────────────────────────────────────────────────────────────── */
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-family: var(--font-body);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}
+
+.badge-burgundy {
+  background: rgba(89, 9, 7, 0.4);
+  border: 1px solid rgba(89, 9, 7, 0.85);
+  color: #E8D2B5;
+}
+
+.badge-sage {
+  background: rgba(165, 167, 155, 0.12);
+  border: 1px solid rgba(165, 167, 155, 0.25);
+  color: #A5A79B;
+}
+
+.badge-cream {
+  background: rgba(232, 210, 181, 0.12);
+  border: 1px solid rgba(232, 210, 181, 0.35);
+  color: #E8D2B5;
+}
+
+/* ─── Dark Shimmer Animation ────────────────────────────────────────────────── */
+@keyframes shimmer {
+  0%   { background-position: -800px 0; }
+  100% { background-position: 800px 0; }
+}
+
+.shimmer {
+  animation: shimmer 1.8s linear infinite;
+  background: linear-gradient(
+    90deg,
+    rgba(165, 167, 155, 0.04) 0%,
+    rgba(232, 210, 181, 0.08) 50%,
+    rgba(165, 167, 155, 0.04) 100%
+  );
+  background-size: 800px 100%;
 }
