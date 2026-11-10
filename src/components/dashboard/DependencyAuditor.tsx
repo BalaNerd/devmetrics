@@ -101,7 +101,7 @@ export default function DependencyAuditor({
           {isPlain ? (
             <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-sans font-bold bg-[#590907]/30 border border-[#590907] text-[#E8D2B5]">
               <ShieldCheck size={13} className="text-[#E8D2B5]" />
-              Safe Dependencies
+              🛡️ Safe Dependencies
             </span>
           ) : (
             <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-mono bg-[#120909] border border-[#A5A79B]/20 text-[#E8D2B5]">
@@ -121,7 +121,7 @@ export default function DependencyAuditor({
             </div>
             <div className="space-y-1">
               <h4 className="text-sm sm:text-base font-bold text-[#E8D2B5] font-sans">
-                🛡️ Clean Dependencies: Low security risk, standard libraries detected, safe for commercial use.
+                🛡️ Safe Dependencies: Standard, verified open-source libraries detected. No commercial license risks.
               </h4>
               <p className="text-xs sm:text-sm text-[#A5A79B] font-sans leading-relaxed">
                 The packages and libraries used in this project are verified against known major vulnerabilities. No restrictive copyleft licenses detected that would endanger commercial deployment.

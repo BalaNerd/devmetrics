@@ -1,15 +1,24 @@
 'use client';
 
 import { useState } from 'react';
-import { Terminal, Clock, Package, DollarSign, Briefcase } from 'lucide-react';
+import { Terminal, Clock, Package, DollarSign, Briefcase, Flame, Timer } from 'lucide-react';
 import type { RepoData } from '@/lib/github';
 import EngineeringDirectives from './EngineeringDirectives';
 import PunchCard from './PunchCard';
 import DependencyAuditor from './DependencyAuditor';
 import CostEstimator from './CostEstimator';
-import RecruiterBrief from './RecruiterBrief';
+import RecruiterCard from './RecruiterCard';
+import ResponseTimeTracker from './ResponseTimeTracker';
+import BusFactorSimulator from './BusFactorSimulator';
 
-export type WorkbenchTabId = 'directives' | 'cadence' | 'dependencies' | 'cost' | 'recruiter';
+export type WorkbenchTabId =
+  | 'directives'
+  | 'cadence'
+  | 'dependencies'
+  | 'recruiter'
+  | 'cost'
+  | 'turnaround'
+  | 'burnout';
 
 export interface WorkbenchLayoutProps {
   data?: RepoData | null;
@@ -21,9 +30,11 @@ export interface WorkbenchLayoutProps {
 const WORKBENCH_TABS = [
   { id: 'directives' as const, label: '⚡ Directives & Fixes', shortLabel: 'Directives', icon: Terminal },
   { id: 'cadence' as const, label: '📅 7×24 Activity Cadence', shortLabel: '7×24 Cadence', icon: Clock },
-  { id: 'dependencies' as const, label: '📦 Dependency & Security Audit', shortLabel: 'Dependencies', icon: Package },
+  { id: 'dependencies' as const, label: '📦 Dependency & Security', shortLabel: 'Dependencies', icon: Package },
+  { id: 'recruiter' as const, label: '💼 Resume & Recruiter Brief', shortLabel: 'Resume Bullets', icon: Briefcase },
   { id: 'cost' as const, label: '💵 Cloud Cost Estimator', shortLabel: 'Cost Estimator', icon: DollarSign },
-  { id: 'recruiter' as const, label: '💼 Resume & Recruiter Brief', shortLabel: 'Recruiter Brief', icon: Briefcase },
+  { id: 'turnaround' as const, label: '⏱️ Turnaround & PR Response', shortLabel: 'Turnaround SLA', icon: Timer },
+  { id: 'burnout' as const, label: '🔥 Burnout Simulator', shortLabel: 'Burnout Sim', icon: Flame },
 ];
 
 export default function WorkbenchLayout({
@@ -106,12 +117,27 @@ export default function WorkbenchLayout({
               />
             )}
 
+            {activeTab === 'recruiter' && (
+              <RecruiterCard data={data} embedded={true} />
+            )}
+
             {activeTab === 'cost' && (
               <CostEstimator data={data} embedded={true} />
             )}
 
-            {activeTab === 'recruiter' && (
-              <RecruiterBrief data={data} embedded={true} />
+            {activeTab === 'turnaround' && (
+              <ResponseTimeTracker
+                owner={data.repo?.owner?.login || ''}
+                repo={data.repo?.name || ''}
+                embedded={true}
+              />
+            )}
+
+            {activeTab === 'burnout' && (
+              <BusFactorSimulator
+                data={data}
+                embedded={true}
+              />
             )}
           </>
         )}
@@ -119,4 +145,3 @@ export default function WorkbenchLayout({
     </div>
   );
 }
-

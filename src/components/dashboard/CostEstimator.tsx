@@ -121,7 +121,7 @@ export default function CostEstimator({ data, embedded = false }: CostEstimatorP
             </div>
 
             <p className="font-sans text-base sm:text-lg font-bold text-[#E8D2B5] leading-snug">
-              Estimated Running Cost: $0/month. This project runs entirely within free-tier cloud hosting (Vercel / GitHub Pages). No server bills required.
+              Estimated Running Cost: $0/month. Operates fully inside free-tier cloud limits.
             </p>
 
             <p className="font-sans text-xs sm:text-sm text-[#A5A79B] leading-relaxed">

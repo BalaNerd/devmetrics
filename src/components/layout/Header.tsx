@@ -1,9 +1,9 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { Search, Key, GitCompare, Download, Zap, GitBranch } from 'lucide-react';
+import { useState, useEffect, useRef } from 'react';
+import { Search, Key, GitCompare, Download, Zap, ChevronDown, FileText, Printer } from 'lucide-react';
 import { useAppStore } from '@/store/useAppStore';
-import { downloadAuditMarkdown } from '@/lib/exportAudit';
+import { downloadAuditMarkdown, printAuditReport } from '@/lib/exportAudit';
 
 function StatusDot() {
   const [status, setStatus] = useState<'operational' | 'degraded' | 'outage' | 'loading'>('loading');
@@ -52,14 +52,35 @@ export default function Header() {
     audienceMode, setAudienceMode, repoData, setComparisonModalOpen, setToast,
   } = useAppStore();
   const [isMounted, setIsMounted] = useState(false);
+  const [exportMenuOpen, setExportMenuOpen] = useState(false);
+  const exportDropdownRef = useRef<HTMLDivElement>(null);
+
   useEffect(() => { setIsMounted(true); }, []);
+
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (exportDropdownRef.current && !exportDropdownRef.current.contains(event.target as Node)) {
+        setExportMenuOpen(false);
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
 
   const displayRepo = isMounted ? currentRepo : '';
 
-  const handleExport = () => {
+  const handleExportMarkdown = () => {
     if (!repoData) return;
     downloadAuditMarkdown(repoData);
-    setToast({ message: `Exported audit for ${repoData.repo.full_name}`, type: 'success' });
+    setExportMenuOpen(false);
+    setToast({ message: `Exported DEV_METRICS_AUDIT.md for ${repoData.repo.full_name}`, type: 'success' });
+  };
+
+  const handleExportPDF = () => {
+    if (!repoData) return;
+    setExportMenuOpen(false);
+    printAuditReport(repoData);
+    setToast({ message: 'Opening print dialog for PDF export...', type: 'info' });
   };
 
   return (
@@ -132,13 +153,46 @@ export default function Header() {
                 <GitCompare size={13} />
                 <span>Compare</span>
               </button>
-              <button
-                onClick={handleExport}
-                className="hidden lg:flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-mono bg-[#180d0d] border border-[#A5A79B]/20 text-[#A5A79B] hover:text-[#E8D2B5] hover:border-[#590907] transition-all cursor-pointer"
-              >
-                <Download size={13} />
-                <span>Export</span>
-              </button>
+
+              {/* Export Audit Dropdown */}
+              <div className="relative" ref={exportDropdownRef}>
+                <button
+                  type="button"
+                  onClick={() => setExportMenuOpen((prev) => !prev)}
+                  className="hidden lg:flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-mono bg-[#180d0d] border border-[#A5A79B]/20 text-[#A5A79B] hover:text-[#E8D2B5] hover:border-[#590907] transition-all cursor-pointer"
+                >
+                  <Download size={13} />
+                  <span>Export Audit</span>
+                  <ChevronDown size={11} className={`transition-transform duration-200 ${exportMenuOpen ? 'rotate-180' : ''}`} />
+                </button>
+
+                {exportMenuOpen && (
+                  <div className="absolute right-0 mt-2 w-56 rounded-xl bg-[#180d0d] border border-[#A5A79B]/20 shadow-2xl p-1.5 z-50 flex flex-col gap-1 backdrop-blur-2xl">
+                    <button
+                      type="button"
+                      onClick={handleExportMarkdown}
+                      className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs font-mono text-left text-[#E8D2B5] hover:bg-[#590907] hover:text-[#E8D2B5] transition-colors cursor-pointer"
+                    >
+                      <FileText size={14} className="text-[#E8D2B5]" />
+                      <div className="flex flex-col">
+                        <span className="font-semibold">Markdown (.md)</span>
+                        <span className="text-[10px] text-[#A5A79B]">DEV_METRICS_AUDIT.md</span>
+                      </div>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={handleExportPDF}
+                      className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs font-mono text-left text-[#E8D2B5] hover:bg-[#590907] hover:text-[#E8D2B5] transition-colors cursor-pointer"
+                    >
+                      <Printer size={14} className="text-[#E8D2B5]" />
+                      <div className="flex flex-col">
+                        <span className="font-semibold">Print / PDF Report</span>
+                        <span className="text-[10px] text-[#A5A79B]">Formatted PDF export</span>
+                      </div>
+                    </button>
+                  </div>
+                )}
+              </div>
             </>
           )}
 
