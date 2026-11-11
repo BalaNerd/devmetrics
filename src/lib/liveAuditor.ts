@@ -24,6 +24,8 @@ export interface LiveAuditData {
   statusText: string;
   ttfbMs: number;
   isHttps: boolean;
+  edgeCacheStatus?: string;
+  serverHeader?: string;
   title: string;
   description: string | null;
   discoveredGitHubRepo: string | null; // e.g. "facebook/react"

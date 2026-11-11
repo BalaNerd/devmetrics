@@ -39,7 +39,8 @@ function buildPunchCardFromActivity(
     }
   }
 
-  const now = Date.now() / 1000;
+  const maxWeek = activity.length > 0 ? Math.max(...activity.map((a) => a.week)) : 1731300000;
+  const now = maxWeek > 0 ? maxWeek : 1731300000;
   const filtered = activity.filter((a) => now - a.week <= weeksBack * 7 * 86400);
 
   for (const week of filtered) {
@@ -69,7 +70,10 @@ function buildPunchCardFromCommits(commits: any[], daysBack: number): PunchCardD
     }
   }
 
-  const cutoff = Date.now() - daysBack * 86400 * 1000;
+  const newestTime = commits[0]?.commit?.author?.date
+    ? new Date(commits[0].commit.author.date).getTime()
+    : 1731300000000;
+  const cutoff = newestTime - daysBack * 86400 * 1000;
   for (const c of commits) {
     const dateStr = c?.commit?.author?.date || c?.commit?.committer?.date;
     if (!dateStr) continue;

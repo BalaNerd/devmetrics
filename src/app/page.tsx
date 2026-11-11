@@ -8,14 +8,19 @@ import VelocityScore from "@/components/dashboard/VelocityScore";
 import BusFactor from "@/components/dashboard/BusFactor";
 import HealthChecklist from "@/components/dashboard/HealthChecklist";
 import WorkbenchLayout from "@/components/dashboard/WorkbenchLayout";
+import LiveUrlAudit from "@/components/dashboard/LiveUrlAudit";
 import { useRepo } from "@/hooks/useRepo";
 import { useAppStore } from "@/store/useAppStore";
 
 export default function DashboardPage() {
-  const { currentRepo } = useAppStore();
+  const { currentRepo, liveAuditData, liveAuditStatus, liveUrl } = useAppStore();
   const { data, loading } = useRepo(currentRepo || "vercel/next.js");
 
-  if (loading) {
+  const hasLiveAuditActive = Boolean(
+    liveAuditData || liveAuditStatus === "loading" || liveAuditStatus === "error"
+  );
+
+  if (loading && !hasLiveAuditActive) {
     return (
       <div className="min-h-screen bg-[#120909] text-[#E8D2B5] flex items-center justify-center font-sans antialiased">
         <div className="flex flex-col items-center gap-4">
@@ -54,6 +59,9 @@ export default function DashboardPage() {
         {/* Fluid Responsive Canvas */}
         <main className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 space-y-6 sm:space-y-8">
           
+          {/* Live URL Inspection View (Requirement 2) */}
+          {hasLiveAuditActive && <LiveUrlAudit />}
+
           {/* 1. Repository Meta Hero */}
           {data?.repo && <RepoHeader repo={data.repo} />}
 
@@ -72,6 +80,8 @@ export default function DashboardPage() {
                 commitFrequency={data?.cadence}
                 daysSinceLastCommit={data?.velocity?.daysSinceLastCommit}
                 trendDirection={data?.velocity?.trendDirection}
+                commits={data?.commits}
+                churn={data?.churn}
               />
 
               <BusFactor

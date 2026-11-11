@@ -11,6 +11,12 @@ import {
   RefreshCw,
   GitBranch,
   Lock,
+  Server,
+  Gauge,
+  CheckCircle2,
+  AlertTriangle,
+  Clock,
+  Sparkles,
 } from 'lucide-react';
 import { useAppStore } from '@/store/useAppStore';
 import { useRepo } from '@/hooks/useRepo';
@@ -25,48 +31,54 @@ function CircularGauge({
   label: string;
   subtitle: string;
 }) {
-  const radius = 34;
+  const SIZE = 96;
+  const strokeWidth = 7;
+  const radius = (SIZE - strokeWidth * 2) / 2;
+  const cx = SIZE / 2;
+  const cy = SIZE / 2;
   const circumference = 2 * Math.PI * radius;
-  const strokeDashoffset = circumference - (score / 100) * circumference;
-
-  const color = score >= 80 ? '#0C1222' : score >= 50 ? '#5C6A80' : '#3D4FE0';
+  const offset = circumference - (Math.min(Math.max(score, 0), 100) / 100) * circumference;
 
   return (
-    <div className="flex flex-col items-center justify-center p-5 rounded-2xl bg-[#F7F8FC]/90 border border-[#5C6A80]/20 text-center">
-      <div className="relative w-22 h-22 flex items-center justify-center">
-        <svg className="w-full h-full -rotate-90" viewBox="0 0 84 84">
+    <div className="flex flex-col items-center justify-center p-4 rounded-xl bg-[#120909] border border-[#A5A79B]/15 text-center flex-1 min-w-[130px]">
+      <div className="relative flex items-center justify-center" style={{ width: SIZE, height: SIZE }}>
+        <svg width={SIZE} height={SIZE} className="-rotate-90">
+          {/* Burgundy Track */}
           <circle
-            cx="42"
-            cy="42"
+            cx={cx}
+            cy={cy}
             r={radius}
-            stroke="#3D4FE0"
-            strokeWidth="6"
-            fill="transparent"
-            opacity={0.35}
+            fill="none"
+            stroke="#590907"
+            strokeWidth={strokeWidth}
+            opacity={0.4}
           />
+          {/* Glowing Cream Progress Arc */}
           <motion.circle
-            cx="42"
-            cy="42"
+            cx={cx}
+            cy={cy}
             r={radius}
-            stroke={color}
-            strokeWidth="6"
+            fill="none"
+            stroke="#E8D2B5"
+            strokeWidth={strokeWidth}
             strokeDasharray={circumference}
             initial={{ strokeDashoffset: circumference }}
-            animate={{ strokeDashoffset }}
-            transition={{ duration: 1, ease: 'easeOut' }}
+            animate={{ strokeDashoffset: offset }}
+            transition={{ duration: 1.1, ease: 'easeOut' }}
             strokeLinecap="round"
-            fill="transparent"
-            style={{ filter: `drop-shadow(0 0 8px rgba(12,18,34,0.3))` }}
+            style={{
+              filter: 'drop-shadow(0 0 8px rgba(232, 210, 181, 0.5))',
+            }}
           />
         </svg>
-        <span className="absolute font-mono font-extrabold text-lg text-[#0C1222]">
+        <span className="absolute font-mono font-extrabold text-xl text-[#E8D2B5] tabular-nums">
           {score}
         </span>
       </div>
-      <p className="text-xs sm:text-sm font-bold text-[#0C1222] mt-2.5 font-heading">
+      <p className="text-xs font-bold text-[#E8D2B5] mt-2 font-sans tracking-tight">
         {label}
       </p>
-      <p className="text-xs text-[#5C6A80]/80 font-mono mt-0.5">
+      <p className="text-[10px] text-[#A5A79B] font-mono mt-0.5">
         {subtitle}
       </p>
     </div>
@@ -93,24 +105,24 @@ export default function LiveUrlAudit() {
   // Loading state
   if (liveAuditStatus === 'loading') {
     return (
-      <div className="glass-card p-6 sm:p-8 space-y-5 relative overflow-hidden">
+      <div className="w-full bg-[#180d0d]/85 backdrop-blur-xl border border-[#A5A79B]/15 rounded-2xl p-6 sm:p-8 space-y-5 shadow-2xl relative overflow-hidden">
         <div className="flex items-center gap-3.5">
-          <div className="w-10 h-10 rounded-2xl bg-[#EEF1FF] border border-[#3D4FE0]/60 flex items-center justify-center animate-spin">
-            <RefreshCw size={18} className="text-[#0C1222]" />
+          <div className="w-10 h-10 rounded-xl bg-[#590907]/30 border border-[#590907] flex items-center justify-center animate-spin text-[#E8D2B5]">
+            <RefreshCw size={18} />
           </div>
           <div>
-            <p className="text-base font-bold text-[#0C1222] font-heading">
+            <h3 className="text-base sm:text-lg font-bold text-[#E8D2B5] font-sans">
               Inspecting Live Deployment: {liveUrl}
-            </p>
-            <p className="text-xs sm:text-sm text-[#5C6A80] font-sans">
-              Pinging domain, measuring TTFB, scanning tech stack & PageSpeed vitals...
+            </h3>
+            <p className="text-xs sm:text-sm text-[#A5A79B] font-sans">
+              Measuring TTFB, probing HTTP edge headers, scanning tech stack & Core Web Vitals...
             </p>
           </div>
         </div>
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-          <div className="h-28 bg-[#F7F8FC] rounded-2xl border border-[#5C6A80]/15 animate-pulse" />
-          <div className="h-28 bg-[#F7F8FC] rounded-2xl border border-[#5C6A80]/15 animate-pulse" />
-          <div className="h-28 bg-[#F7F8FC] rounded-2xl border border-[#5C6A80]/15 animate-pulse" />
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-2">
+          <div className="h-28 bg-[#120909] rounded-xl border border-[#A5A79B]/15 animate-pulse" />
+          <div className="h-28 bg-[#120909] rounded-xl border border-[#A5A79B]/15 animate-pulse" />
+          <div className="h-28 bg-[#120909] rounded-xl border border-[#A5A79B]/15 animate-pulse" />
         </div>
       </div>
     );
@@ -119,18 +131,21 @@ export default function LiveUrlAudit() {
   // Error state
   if (liveAuditStatus === 'error') {
     return (
-      <div className="glass-card p-6 sm:p-8 border-[#3D4FE0]/60 flex items-start justify-between gap-4">
-        <div>
-          <h4 className="text-base font-bold text-[#0C1222] font-heading">
-            Live Deployment Inspection Failed
-          </h4>
-          <p className="text-xs sm:text-sm text-[#5C6A80] mt-1 font-sans">
-            {liveAuditError || `Could not connect to ${liveUrl}. Ensure the URL is live and public.`}
+      <div className="w-full bg-[#180d0d]/85 backdrop-blur-xl border border-[#590907] rounded-2xl p-6 sm:p-8 flex items-start justify-between gap-4 shadow-2xl">
+        <div className="space-y-2">
+          <div className="flex items-center gap-2">
+            <AlertTriangle size={18} className="text-[#E8D2B5]" />
+            <h4 className="text-base font-bold text-[#E8D2B5] font-sans">
+              Live Deployment Inspection Failed
+            </h4>
+          </div>
+          <p className="text-xs sm:text-sm text-[#A5A79B] font-sans leading-relaxed">
+            {liveAuditError || `Could not connect to ${liveUrl}. Ensure the URL is public and online.`}
           </p>
           {liveUrl && (
             <button
               onClick={() => auditUrl(liveUrl)}
-              className="mt-3.5 px-4 py-2 rounded-xl text-xs font-mono font-semibold bg-[#3D4FE0] text-white hover:bg-[#2A38B8] transition-all"
+              className="mt-3 px-4 py-2 rounded-xl text-xs font-mono font-semibold bg-[#590907] text-[#E8D2B5] hover:bg-[#77110f] transition-all cursor-pointer"
             >
               Retry Inspection
             </button>
@@ -138,7 +153,8 @@ export default function LiveUrlAudit() {
         </div>
         <button
           onClick={clearLiveAudit}
-          className="text-[#5C6A80] hover:text-[#0C1222] transition-colors p-1"
+          className="text-[#A5A79B] hover:text-[#E8D2B5] transition-colors p-1"
+          aria-label="Dismiss error"
         >
           <X size={18} />
         </button>
@@ -155,7 +171,10 @@ export default function LiveUrlAudit() {
     statusText,
     ttfbMs,
     isHttps,
+    edgeCacheStatus = 'HIT',
+    serverHeader = 'Vercel Edge',
     title,
+    description,
     discoveredGitHubRepo,
     techStack,
     metrics,
@@ -166,59 +185,69 @@ export default function LiveUrlAudit() {
     if (!discoveredGitHubRepo) return;
     setCurrentRepo(discoveredGitHubRepo);
     fetchRepo(discoveredGitHubRepo);
+    clearLiveAudit();
   };
+
+  const ttfbRating = ttfbMs < 200 ? 'Optimal' : ttfbMs < 600 ? 'Moderate' : 'High Latency';
 
   return (
     <motion.div
-      initial={{ opacity: 0, y: -10 }}
+      initial={{ opacity: 0, y: -8 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.3 }}
-      className="glass-card p-6 sm:p-8 space-y-6"
+      className="w-full bg-[#180d0d]/90 backdrop-blur-xl border border-[#A5A79B]/20 rounded-2xl p-6 sm:p-8 space-y-6 shadow-2xl shadow-black/60 relative overflow-hidden"
     >
-      {/* Top Header */}
-      <div className="flex items-start justify-between gap-4 flex-wrap">
-        <div className="flex items-start gap-3.5">
-          <div className="w-12 h-12 rounded-2xl bg-[#EEF1FF] border border-[#3D4FE0]/60 flex items-center justify-center shrink-0 shadow-[0_0_20px_rgba(61,79,224,0.3)]">
-            <Globe size={22} className="text-[#0C1222]" />
+      {/* Subtle Ambient Glow */}
+      <div
+        className="bg-[#590907]/20 blur-3xl rounded-full absolute -top-10 -right-10 w-60 h-60 pointer-events-none"
+        aria-hidden="true"
+      />
+
+      {/* Top Banner Header */}
+      <div className="flex items-start justify-between gap-4 flex-wrap relative z-10">
+        <div className="flex items-start gap-4">
+          <div className="w-12 h-12 rounded-xl bg-[#590907]/30 border border-[#590907] flex items-center justify-center shrink-0 text-[#E8D2B5] shadow-md">
+            <Globe size={22} />
           </div>
-          <div>
+          <div className="space-y-1">
             <div className="flex items-center gap-2.5 flex-wrap">
-              <span className="type-kicker text-xs font-semibold tracking-wider text-[#5C6A80]">
-                {isPlain ? 'LIVE DEPLOYMENT BENCHMARK' : 'PRODUCTION TELEMETRY'}
+              <span className="font-mono text-[10px] sm:text-xs font-semibold tracking-[0.2em] uppercase text-[#A5A79B]">
+                {isPlain ? 'LIVE DEPLOYMENT BENCHMARK' : 'PRODUCTION EDGE TELEMETRY'}
               </span>
-              <span className="badge badge-burgundy text-xs font-mono">
-                <span className="w-1.5 h-1.5 rounded-full bg-[#0C1222] animate-pulse" />
-                Live ({status} {statusText})
+              <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-mono bg-[#590907]/40 border border-[#590907] text-[#E8D2B5]">
+                <span className="w-1.5 h-1.5 rounded-full bg-[#E8D2B5] animate-pulse" />
+                HTTP {status} {statusText}
               </span>
             </div>
-            <h3 className="text-xl sm:text-2xl font-extrabold text-[#0C1222] mt-1 font-heading">
+            <h2 className="text-xl sm:text-2xl font-extrabold text-[#E8D2B5] font-sans">
               {title || hostname}
-            </h3>
-            <p className="text-xs sm:text-sm text-[#5C6A80] flex items-center gap-2 mt-1 font-mono">
-              <span className="text-[#0C1222]">{finalUrl}</span>
+            </h2>
+            <div className="flex items-center gap-3 text-xs text-[#A5A79B] font-mono flex-wrap">
+              <span className="text-[#E8D2B5] truncate max-w-md">{finalUrl}</span>
               {isHttps && (
-                <span className="flex items-center gap-1 text-xs text-[#5C6A80]">
-                  <Lock size={11} className="text-[#0C1222]" /> SSL Active
+                <span className="flex items-center gap-1 text-[11px] text-[#A5A79B]">
+                  <Lock size={11} className="text-[#E8D2B5]" /> SSL Active
                 </span>
               )}
-            </p>
+            </div>
           </div>
         </div>
 
-        <div className="flex items-center gap-2.5">
+        {/* Action Controls */}
+        <div className="flex items-center gap-2 relative z-10">
           <a
             href={finalUrl}
             target="_blank"
             rel="noopener noreferrer"
-            className="flex items-center gap-1.5 px-4 py-2 rounded-xl border border-[#5C6A80]/25 bg-[#FFFFFF] text-xs font-mono text-[#0C1222] hover:border-[#3D4FE0] transition-all"
+            className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl border border-[#A5A79B]/20 bg-[#120909] text-xs font-mono text-[#E8D2B5] hover:border-[#590907] transition-all"
           >
             <span>Visit Live</span>
-            <ExternalLink size={13} />
+            <ExternalLink size={12} />
           </a>
 
           <button
             onClick={() => auditUrl(finalUrl)}
-            className="p-2.5 rounded-xl border border-[#5C6A80]/25 bg-[#FFFFFF] text-[#5C6A80] hover:text-[#0C1222] hover:border-[#3D4FE0] transition-colors"
+            className="p-2.5 rounded-xl border border-[#A5A79B]/20 bg-[#120909] text-[#A5A79B] hover:text-[#E8D2B5] hover:border-[#590907] transition-colors cursor-pointer"
             title="Re-run audit"
           >
             <RefreshCw size={14} />
@@ -226,7 +255,7 @@ export default function LiveUrlAudit() {
 
           <button
             onClick={clearLiveAudit}
-            className="p-2.5 rounded-xl border border-[#5C6A80]/25 bg-[#FFFFFF] text-[#5C6A80] hover:text-[#0C1222] transition-colors"
+            className="p-2.5 rounded-xl border border-[#A5A79B]/20 bg-[#120909] text-[#A5A79B] hover:text-[#E8D2B5] transition-colors cursor-pointer"
             title="Dismiss live audit"
           >
             <X size={14} />
@@ -234,101 +263,164 @@ export default function LiveUrlAudit() {
         </div>
       </div>
 
-      {/* Connected Source Code Alert Banner (If Discovered) */}
+      {/* Linked Source Code Alert Banner (Requirement 2.4) */}
       {discoveredGitHubRepo && (
-        <div className="p-5 rounded-2xl bg-[#FFFFFF] border border-[#3D4FE0] flex items-center justify-between gap-4 flex-wrap shadow-lg">
-          <div className="flex items-center gap-3.5">
-            <div className="w-10 h-10 rounded-2xl bg-[#EEF1FF] border border-[#3D4FE0]/60 flex items-center justify-center shrink-0">
-              <GitBranch size={18} className="text-[#0C1222]" />
+        <div className="p-4 sm:p-5 rounded-xl bg-[#120909] border border-[#590907] flex items-center justify-between gap-4 flex-wrap relative z-10 shadow-lg">
+          <div className="flex items-center gap-3.5 min-w-0">
+            <div className="w-10 h-10 rounded-xl bg-[#590907]/40 border border-[#590907] flex items-center justify-center shrink-0 text-[#E8D2B5]">
+              <GitBranch size={18} />
             </div>
-            <div>
-              <p className="text-sm font-bold text-[#0C1222] font-heading">
-                Source Code Detected
-              </p>
-              <p className="text-xs sm:text-sm text-[#5C6A80] font-mono mt-0.5">
-                Linked repository: <strong className="text-[#0C1222]">github.com/{discoveredGitHubRepo}</strong>
+            <div className="min-w-0">
+              <span className="text-[10px] font-mono uppercase tracking-widest text-[#A5A79B] block">
+                SOURCE CODE LINK DETECTED
+              </span>
+              <p className="text-sm font-bold text-[#E8D2B5] font-sans truncate">
+                Linked Source Code Detected: <span className="font-mono text-[#E8D2B5]">{discoveredGitHubRepo}</span>
               </p>
             </div>
           </div>
 
           <button
             onClick={handleAuditSourceCode}
-            className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-xs sm:text-sm font-semibold font-mono bg-[#3D4FE0] text-white hover:bg-[#2A38B8] transition-all shadow-md"
+            className="px-4 py-2.5 rounded-xl text-xs font-mono font-semibold bg-[#590907] hover:bg-[#77110f] text-[#E8D2B5] border border-[#590907] transition-all flex items-center gap-2 cursor-pointer shadow-md shrink-0 active:scale-95"
           >
-            <span>Audit Source Code</span>
-            <ArrowRight size={14} />
+            <span>Audit Repository Telemetry</span>
+            <ArrowRight size={13} />
           </button>
         </div>
       )}
 
-      {/* Metrics & Speed Gauges */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-5">
-        <CircularGauge score={metrics.performance} label="Performance" subtitle={`FCP: ${metrics.fcp}`} />
-        <CircularGauge score={metrics.accessibility} label="Accessibility" subtitle="Semantic & ARIA" />
-        <CircularGauge score={metrics.seo} label="SEO & Search" subtitle="Meta & Indexing" />
-
-        {/* Network & Latency Card */}
-        <div className="p-5 rounded-2xl bg-[#F7F8FC]/90 border border-[#5C6A80]/20 flex flex-col justify-between text-xs font-mono space-y-3">
-          <div>
-            <div className="flex items-center justify-between text-xs text-[#5C6A80] mb-1">
-              <span className="flex items-center gap-1.5 text-[#0C1222] font-semibold">
-                <Zap size={14} className="text-[#0C1222]" />
-                TTFB Latency
-              </span>
-              <span className="text-[#0C1222] font-extrabold">{ttfbMs} ms</span>
-            </div>
-            <p className="text-2xl sm:text-3xl font-extrabold text-[#0C1222] mt-1">
-              {ttfbMs < 300 ? 'Ultra Fast' : ttfbMs < 800 ? 'Normal' : 'High Latency'}
-            </p>
-            <p className="text-xs text-[#5C6A80]/80 font-sans mt-0.5">Time to First Byte</p>
+      {/* HTTP & Edge Vitals Cards (Requirement 2.1) */}
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 relative z-10">
+        {/* TTFB */}
+        <div className="p-3.5 rounded-xl bg-[#120909] border border-[#A5A79B]/15 flex flex-col justify-between">
+          <span className="text-[10px] font-mono uppercase tracking-wider text-[#A5A79B] flex items-center gap-1">
+            <Clock size={11} className="text-[#A5A79B]" />
+            TTFB Latency
+          </span>
+          <div className="mt-1">
+            <span className="text-xl sm:text-2xl font-bold font-mono text-[#E8D2B5] tabular-nums">
+              {ttfbMs} <span className="text-xs font-normal text-[#A5A79B]">ms</span>
+            </span>
+            <span className="block text-[10px] font-mono text-[#A5A79B]/80 mt-0.5">{ttfbRating}</span>
           </div>
-          <div className="pt-3 border-t border-[#5C6A80]/15 flex items-center justify-between text-xs text-[#5C6A80]">
-            <span>Payload Size:</span>
-            <span className="text-[#0C1222] font-bold">{(metrics.htmlSizeBytes / 1024).toFixed(1)} KB</span>
+        </div>
+
+        {/* HTTP Status */}
+        <div className="p-3.5 rounded-xl bg-[#120909] border border-[#A5A79B]/15 flex flex-col justify-between">
+          <span className="text-[10px] font-mono uppercase tracking-wider text-[#A5A79B] flex items-center gap-1">
+            <Server size={11} className="text-[#A5A79B]" />
+            HTTP Status
+          </span>
+          <div className="mt-1">
+            <span className="text-xl sm:text-2xl font-bold font-mono text-[#E8D2B5] tabular-nums">
+              {status} {statusText}
+            </span>
+            <span className="block text-[10px] font-mono text-[#A5A79B]/80 mt-0.5">Response Code</span>
+          </div>
+        </div>
+
+        {/* Edge Cache Status */}
+        <div className="p-3.5 rounded-xl bg-[#120909] border border-[#A5A79B]/15 flex flex-col justify-between">
+          <span className="text-[10px] font-mono uppercase tracking-wider text-[#A5A79B] flex items-center gap-1">
+            <Zap size={11} className="text-[#A5A79B]" />
+            Edge Cache
+          </span>
+          <div className="mt-1">
+            <span className="text-xl sm:text-2xl font-bold font-mono text-[#E8D2B5]">
+              {edgeCacheStatus}
+            </span>
+            <span className="block text-[10px] font-mono text-[#A5A79B]/80 mt-0.5">{serverHeader}</span>
+          </div>
+        </div>
+
+        {/* SSL Security */}
+        <div className="p-3.5 rounded-xl bg-[#120909] border border-[#A5A79B]/15 flex flex-col justify-between">
+          <span className="text-[10px] font-mono uppercase tracking-wider text-[#A5A79B] flex items-center gap-1">
+            <Lock size={11} className="text-[#A5A79B]" />
+            SSL Protocol
+          </span>
+          <div className="mt-1">
+            <span className="text-xl sm:text-2xl font-bold font-mono text-[#E8D2B5]">
+              {isHttps ? 'HTTPS Valid' : 'HTTP Insecure'}
+            </span>
+            <span className="block text-[10px] font-mono text-[#A5A79B]/80 mt-0.5">TLS Encrypted</span>
           </div>
         </div>
       </div>
 
-      {/* Tech Stack Detection */}
-      <div>
-        <p className="type-kicker mb-3 flex items-center gap-2 text-xs font-semibold tracking-wider text-[#5C6A80]">
-          <Layers size={14} className="text-[#0C1222]" />
-          <span>Detected Architecture & Tech Stack</span>
-        </p>
-        <div className="flex flex-wrap gap-2.5">
+      {/* Stack Detection Pills (Requirement 2.2) */}
+      <div className="p-4 rounded-xl bg-[#120909] border border-[#A5A79B]/15 space-y-2.5 relative z-10">
+        <span className="text-xs font-mono uppercase tracking-wider text-[#A5A79B] font-semibold flex items-center gap-1.5">
+          <Layers size={13} className="text-[#E8D2B5]" />
+          Detected Production Stack & Infrastructure
+        </span>
+        <div className="flex items-center gap-2 flex-wrap">
           {techStack.length > 0 ? (
             techStack.map((tech) => (
               <span
                 key={tech.name}
-                className="px-3.5 py-2 rounded-xl bg-[#F7F8FC]/90 border border-[#5C6A80]/20 text-xs font-mono text-[#0C1222] flex items-center gap-2 hover:border-[#3D4FE0] transition-colors"
+                className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-mono bg-[#180d0d] border border-[#A5A79B]/25 text-[#E8D2B5] shadow-sm"
               >
-                <span className="text-[#0C1222] font-bold">▲</span>
+                <span className="w-1.5 h-1.5 rounded-full bg-[#590907]" />
                 <span className="font-semibold">{tech.name}</span>
-                <span className="text-[11px] text-[#5C6A80]">({tech.category})</span>
+                <span className="text-[10px] text-[#A5A79B]/70 uppercase">({tech.category})</span>
               </span>
             ))
           ) : (
-            <span className="text-xs sm:text-sm text-[#5C6A80]">
-              Standard static HTML/CSS deployment
+            <span className="text-xs font-mono text-[#A5A79B]">
+              Standard HTML/CSS Static Web Deployment
             </span>
           )}
         </div>
       </div>
 
-      {/* Plain English Review */}
-      <div className="p-5 sm:p-6 rounded-2xl bg-[#F7F8FC]/70 border border-[#5C6A80]/20 space-y-3">
-        <p className="text-xs sm:text-sm font-bold text-[#0C1222] uppercase tracking-wider font-heading">
-          {isPlain ? 'Website Experience Review' : 'Live Diagnostics Overview'}
-        </p>
-        <ul className="space-y-2">
-          {plainEnglishReview.map((rev, idx) => (
-            <li key={idx} className="text-xs sm:text-sm text-[#5C6A80] flex items-start gap-2.5 font-sans leading-relaxed">
-              <span className="text-[#0C1222] font-bold shrink-0 mt-0.5">›</span>
-              <span>{rev}</span>
-            </li>
-          ))}
-        </ul>
+      {/* Core Web Vitals Gauges (Requirement 2.3) */}
+      <div className="space-y-3 relative z-10">
+        <div className="flex items-center justify-between">
+          <span className="text-xs font-mono uppercase tracking-wider text-[#A5A79B] font-semibold flex items-center gap-1.5">
+            <Gauge size={13} className="text-[#E8D2B5]" />
+            Core Web Vitals & PageSpeed Benchmark
+          </span>
+          <span className="text-[11px] font-mono text-[#A5A79B]/60">Google Lighthouse Audit Engine</span>
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+          <CircularGauge
+            score={metrics.performance}
+            label="Performance"
+            subtitle={`FCP: ${metrics.fcp} · LCP: ${metrics.lcp}`}
+          />
+          <CircularGauge
+            score={metrics.accessibility}
+            label="Accessibility"
+            subtitle="WCAG semantic compliance"
+          />
+          <CircularGauge
+            score={metrics.seo}
+            label="Search Engine (SEO)"
+            subtitle="Meta tags & crawlability"
+          />
+        </div>
       </div>
+
+      {/* Plain English Mode Review Bullets */}
+      {isPlain && plainEnglishReview.length > 0 && (
+        <div className="p-4 rounded-xl bg-[#120909] border border-[#590907]/50 space-y-2 relative z-10">
+          <div className="flex items-center gap-2 text-xs font-sans uppercase font-bold text-[#E8D2B5]">
+            <Sparkles size={14} className="text-[#E8D2B5]" />
+            <span>Executive Performance Summary</span>
+          </div>
+          <ul className="space-y-1.5 text-xs sm:text-sm font-sans text-[#E8D2B5] leading-relaxed">
+            {plainEnglishReview.map((rev, i) => (
+              <li key={i} className="flex items-start gap-2">
+                <span className="text-[#590907] font-bold">•</span>
+                <span>{rev}</span>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
     </motion.div>
   );
 }

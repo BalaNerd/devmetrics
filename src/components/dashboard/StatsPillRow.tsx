@@ -107,8 +107,9 @@ export default function StatsPillRow({ repo, releases }: StatsPillRowProps) {
   const issueBadge = isHighIssues ? 'Triage Req' : 'Healthy';
   const issueBadgeClass = isHighIssues ? 'badge-rose' : 'badge-emerald';
 
+  const anchorTime = repo.pushed_at ? new Date(repo.pushed_at).getTime() : 1731300000000;
   const releaseAgeDays = latestRelease
-    ? Math.floor((Date.now() - new Date(latestRelease.published_at).getTime()) / 86400000)
+    ? Math.max(0, Math.floor((anchorTime - new Date(latestRelease.published_at).getTime()) / 86400000))
     : 999;
   const isReleaseFresh = releaseAgeDays <= 45;
   const releaseBadge = latestRelease ? (isReleaseFresh ? 'Active' : 'Stale') : 'No Tag';

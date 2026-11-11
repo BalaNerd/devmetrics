@@ -150,7 +150,8 @@ export type FetchStatus = 'idle' | 'loading' | 'success' | 'error' | 'rate-limit
 
 // GitHub API fetch utility
 export function getGitHubHeaders(token?: string | null): HeadersInit {
-  const cleanToken = token?.trim().replace(/[\r\n\t]/g, '');
+  const envToken = typeof process !== 'undefined' ? process.env.GITHUB_TOKEN : null;
+  const cleanToken = (token || envToken)?.trim().replace(/[\r\n\t]/g, '');
   const headers: HeadersInit = {
     Accept: 'application/vnd.github.v3+json',
     ...(cleanToken ? { Authorization: `Bearer ${cleanToken}` } : {}),

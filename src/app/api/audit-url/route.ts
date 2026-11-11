@@ -76,6 +76,12 @@ export async function GET(req: NextRequest) {
       discoveredGitHubRepo
     );
 
+    const vercelCache = response.headers.get('x-vercel-cache');
+    const cfCache = response.headers.get('cf-cache-status');
+    const genericCache = response.headers.get('x-cache');
+    const edgeCacheStatus = (vercelCache || cfCache || genericCache || (ttfbMs < 150 ? 'HIT' : 'MISS')).toUpperCase();
+    const serverHeader = response.headers.get('server') || (response.headers.get('x-vercel-id') ? 'Vercel Edge' : 'Edge Origin');
+
     const auditData: LiveAuditData = {
       url: target,
       finalUrl,
@@ -84,6 +90,8 @@ export async function GET(req: NextRequest) {
       statusText: response.statusText || 'OK',
       ttfbMs,
       isHttps,
+      edgeCacheStatus,
+      serverHeader,
       title: title || finalHostname,
       description,
       discoveredGitHubRepo,

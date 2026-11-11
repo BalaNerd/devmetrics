@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
-import { Search, Key, GitCompare, Download, Zap, ChevronDown, FileText, Printer } from 'lucide-react';
+import { Search, GitCompare, Download, ChevronDown, FileText, Printer, Zap } from 'lucide-react';
 import { useAppStore } from '@/store/useAppStore';
 import { downloadAuditMarkdown, printAuditReport } from '@/lib/exportAudit';
 
@@ -48,7 +48,7 @@ function StatusDot() {
 
 export default function Header() {
   const {
-    setCommandBarOpen, currentRepo, githubToken, setTokenModalOpen,
+    setCommandBarOpen, currentRepo,
     audienceMode, setAudienceMode, repoData, setComparisonModalOpen, setToast,
   } = useAppStore();
   const [isMounted, setIsMounted] = useState(false);
@@ -197,27 +197,6 @@ export default function Header() {
           )}
 
           <StatusDot />
-
-          {/* GitHub Token Button */}
-          {!isMounted ? (
-            <div className="w-24 h-8 rounded-full bg-[#180d0d] border border-[#A5A79B]/15 opacity-40" />
-          ) : githubToken ? (
-            <button
-              onClick={() => setTokenModalOpen(true)}
-              className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-mono bg-[#180d0d] border border-[#E8D2B5]/30 text-[#E8D2B5] hover:border-[#E8D2B5] transition-all cursor-pointer"
-            >
-              <Key size={12} className="text-[#E8D2B5]" />
-              <span className="hidden sm:inline">Token ✓</span>
-            </button>
-          ) : (
-            <button
-              onClick={() => setTokenModalOpen(true)}
-              className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-mono font-semibold bg-[#590907] hover:bg-[#77110f] border border-[#590907] text-[#E8D2B5] transition-all cursor-pointer shadow-sm"
-            >
-              <Key size={12} />
-              <span className="hidden sm:inline">Add Token</span>
-            </button>
-          )}
 
           <button
             onClick={() => setCommandBarOpen(true)}

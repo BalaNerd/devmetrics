@@ -4,6 +4,7 @@ import CommandBar from '@/components/layout/CommandBar';
 import RateLimitModal from '@/components/ui/RateLimitModal';
 import Toast from '@/components/ui/Toast';
 import BadgeGenerator from '@/components/dashboard/BadgeGenerator';
+import RepoComparisonModal from '@/components/dashboard/RepoComparisonModal';
 import { useAppStore } from '@/store/useAppStore';
 
 export default function AppModals() {
@@ -13,6 +14,7 @@ export default function AppModals() {
       <Toast />
       <CommandBar />
       <RateLimitModal />
+      <RepoComparisonModal />
       {repoData && <BadgeGenerator data={repoData} />}
     </>
   );

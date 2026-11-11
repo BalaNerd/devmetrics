@@ -385,9 +385,9 @@ export default function EngineeringDirectives({
                             </div>
                           </div>
 
-                          {/* Terminal Code Drawer with Copy Button in #590907 */}
+                          {/* Terminal Code Drawer with Copy Button in #590907 (Requirement 3.4) */}
                           {directive.snippet && (
-                            <div className="rounded-xl border border-[#A5A79B]/15 bg-[#0a0505] overflow-hidden shadow-xl">
+                            <div className="rounded-xl border border-[#A5A79B]/20 bg-[#090404] overflow-hidden shadow-2xl">
                               <div className="px-3.5 py-2.5 border-b border-[#A5A79B]/15 bg-[#120909] flex items-center justify-between gap-3">
                                 <div className="flex items-center gap-2 min-w-0">
                                   <FileCode2 size={13} className="text-[#E8D2B5] shrink-0" />
@@ -399,7 +399,7 @@ export default function EngineeringDirectives({
                                 <button
                                   type="button"
                                   onClick={() => handleCopy(directive.id, directive.snippet)}
-                                  className="inline-flex items-center gap-1.5 px-3 py-1.5 min-h-[38px] rounded-lg text-xs font-mono font-semibold bg-[#590907] hover:bg-[#77110f] text-[#E8D2B5] border border-[#590907] transition-all duration-200 ease-out cursor-pointer shadow-sm shrink-0 active:scale-95"
+                                  className="inline-flex items-center gap-1.5 px-3.5 py-1.5 min-h-[36px] rounded-lg text-xs font-mono font-semibold bg-[#590907] hover:bg-[#77110f] text-[#E8D2B5] border border-[#590907] transition-all duration-200 ease-out cursor-pointer shadow-md shrink-0 active:scale-95"
                                 >
                                   {isCopied ? (
                                     <>
@@ -415,7 +415,7 @@ export default function EngineeringDirectives({
                                 </button>
                               </div>
 
-                              <pre className="p-4 font-mono text-xs text-[#E8D2B5] leading-relaxed overflow-x-auto selection:bg-[#590907]">
+                              <pre className="p-4 font-mono text-xs text-[#E8D2B5] leading-relaxed overflow-x-auto selection:bg-[#590907] bg-[#090404]">
                                 <code>{directive.snippet}</code>
                               </pre>
                             </div>
