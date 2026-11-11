@@ -1,5 +1,6 @@
 'use client';
 
+import { useState, useEffect } from 'react';
 import { Sparkles, Activity, Users, ShieldCheck } from 'lucide-react';
 import type { RepoData } from '@/lib/github';
 import { calculateHealthGrade, formatRelativeTime } from '@/lib/metrics';
@@ -11,7 +12,14 @@ interface HumanReadableSummaryProps {
 
 export default function HumanReadableSummary({ data }: HumanReadableSummaryProps) {
   const { audienceMode, setAudienceMode } = useAppStore();
-  const isPlain = audienceMode === 'plain';
+  const [isMounted, setIsMounted] = useState(false);
+
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
+
+  // Standardize SSR default until the client component has cleanly mounted
+  const isPlain = isMounted && audienceMode === 'plain';
 
   if (!data) return null;
 
@@ -39,19 +47,19 @@ export default function HumanReadableSummary({ data }: HumanReadableSummaryProps
             <Sparkles size={17} />
           </div>
           <div>
-            <span className="text-[11px] font-semibold tracking-[0.2em] uppercase text-[#A5A79B]/80 font-mono block">
+            <span suppressHydrationWarning className="text-[11px] font-semibold tracking-[0.2em] uppercase text-[#A5A79B]/80 font-mono block">
               {isPlain ? 'EXECUTIVE PORTFOLIO BRIEF' : 'EXECUTIVE DILIGENCE SUMMARY'}
             </span>
-            <h2 className="text-xl font-bold tracking-tight text-[#E8D2B5] font-sans mt-0.5">
+            <h2 suppressHydrationWarning className="text-xl font-bold tracking-tight text-[#E8D2B5] font-sans mt-0.5">
               {isPlain ? 'Plain English Dilemma Assessment' : 'Codebase Health & Dilemma Assessment'}
             </h2>
           </div>
         </div>
 
         {/* Segmented Switch: Technical Mode vs Plain English Mode */}
-        <div className="flex items-center p-1 rounded-xl bg-[#120909] border border-[#A5A79B]/20 shrink-0 self-start sm:self-auto w-full sm:w-auto">
+        <div suppressHydrationWarning className="flex items-center p-1 rounded-xl bg-[#120909] border border-[#A5A79B]/20 shrink-0 self-start sm:self-auto w-full sm:w-auto">
           {(['technical', 'plain'] as const).map((mode: AudienceMode) => {
-            const isActive = audienceMode === mode;
+            const isActive = (isMounted ? audienceMode : 'technical') === mode;
             return (
               <button
                 key={mode}
@@ -71,7 +79,7 @@ export default function HumanReadableSummary({ data }: HumanReadableSummaryProps
       </div>
 
       {/* Bulleted Executive Takeaways */}
-      <div className="relative z-10 space-y-3">
+      <div suppressHydrationWarning className="relative z-10 space-y-3">
         {/* Bullet 1: Cadence */}
         <div className="flex items-start gap-3 text-sm text-[#A5A79B] font-sans leading-relaxed">
           <span className="mt-1.5 w-2 h-2 rounded-full bg-[#E8D2B5] shrink-0 shadow-[0_0_6px_rgba(232,210,181,0.5)]" />

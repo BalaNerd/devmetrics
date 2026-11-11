@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Briefcase, Copy, Check, Award, Sparkles } from 'lucide-react';
 import { useAppStore } from '@/store/useAppStore';
 import type { RepoData } from '@/lib/github';
@@ -12,7 +12,14 @@ interface RecruiterCardProps {
 
 export default function RecruiterCard({ data, embedded = false }: RecruiterCardProps) {
   const { audienceMode, setToast } = useAppStore();
-  const isPlain = audienceMode === 'plain';
+  const [isMounted, setIsMounted] = useState(false);
+
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
+
+  // Standardize SSR default until the client component has cleanly mounted
+  const isPlain = isMounted && audienceMode === 'plain';
   const [copied, setCopied] = useState(false);
 
   const { repo, velocity, health, churn, contributors, languages, releases } = data;
@@ -57,10 +64,10 @@ export default function RecruiterCard({ data, embedded = false }: RecruiterCardP
             <Briefcase size={17} />
           </div>
           <div>
-            <span className="font-mono text-[10px] sm:text-xs font-semibold tracking-[0.2em] uppercase text-[#A5A79B]/80 block">
+            <span suppressHydrationWarning className="font-mono text-[10px] sm:text-xs font-semibold tracking-[0.2em] uppercase text-[#A5A79B]/80 block">
               {isPlain ? 'RESUME & PORTFOLIO BUILDER' : 'RECRUITER ACCOMPLISHMENT ARTIFACTS'}
             </span>
-            <h3 className="font-sans text-base sm:text-lg font-bold text-[#E8D2B5] tracking-tight mt-0.5">
+            <h3 suppressHydrationWarning className="font-sans text-base sm:text-lg font-bold text-[#E8D2B5] tracking-tight mt-0.5">
               {isPlain ? 'Portfolio-Ready Accomplishment Bullets' : 'Quantified Engineering Impact Bullets'}
             </h3>
           </div>
@@ -77,7 +84,7 @@ export default function RecruiterCard({ data, embedded = false }: RecruiterCardP
       </div>
 
       {/* Mode Callout Banner */}
-      <div className="p-3.5 rounded-xl bg-[#120909] border border-[#A5A79B]/15 flex items-center gap-2.5 text-xs font-sans text-[#A5A79B]">
+      <div suppressHydrationWarning className="p-3.5 rounded-xl bg-[#120909] border border-[#A5A79B]/15 flex items-center gap-2.5 text-xs font-sans text-[#A5A79B]">
         <Award size={15} className="text-[#E8D2B5] shrink-0" />
         <span>
           {isPlain
@@ -87,7 +94,7 @@ export default function RecruiterCard({ data, embedded = false }: RecruiterCardP
       </div>
 
       {/* 3 Quantified Bullet Points Cards */}
-      <div className="space-y-3">
+      <div suppressHydrationWarning className="space-y-3">
         {activeBullets.map((bullet, i) => (
           <div
             key={i}

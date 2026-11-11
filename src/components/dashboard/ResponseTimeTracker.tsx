@@ -17,7 +17,14 @@ export default function ResponseTimeTracker({
   embedded = false,
 }: ResponseTimeTrackerProps) {
   const { audienceMode, githubToken } = useAppStore();
-  const isPlain = audienceMode === 'plain';
+  const [isMounted, setIsMounted] = useState(false);
+
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
+
+  // Standardize SSR default until the client component has cleanly mounted
+  const isPlain = isMounted && audienceMode === 'plain';
 
   const [loading, setLoading] = useState(true);
   const [issues, setIssues] = useState<IssueEntry[]>([]);
@@ -103,24 +110,25 @@ export default function ResponseTimeTracker({
             <Clock size={17} />
           </div>
           <div>
-            <span className="font-mono text-[10px] sm:text-xs font-semibold tracking-[0.2em] uppercase text-[#A5A79B]/80 block">
+            <span suppressHydrationWarning className="font-mono text-[10px] sm:text-xs font-semibold tracking-[0.2em] uppercase text-[#A5A79B]/80 block">
               {isPlain ? 'MAINTAINER RESPONSIVENESS & TRIAGE' : 'ISSUE TURNAROUND & PR RESPONSE SLA'}
             </span>
-            <h3 className="font-sans text-base sm:text-lg font-bold text-[#E8D2B5] tracking-tight mt-0.5">
+            <h3 suppressHydrationWarning className="font-sans text-base sm:text-lg font-bold text-[#E8D2B5] tracking-tight mt-0.5">
               {isPlain ? 'Maintainer Response Speed' : 'Turnaround Speed & Maintenance Latency'}
             </h3>
           </div>
         </div>
 
         {/* Status / Grade Badge */}
-        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-mono bg-[#120909] border border-[#A5A79B]/20 text-[#E8D2B5]">
+        <div suppressHydrationWarning className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-mono bg-[#120909] border border-[#A5A79B]/20 text-[#E8D2B5]">
           <span className="font-bold text-sm text-[#E8D2B5]">Grade {grade}</span>
           <span className="text-[#A5A79B]">SLA</span>
         </div>
       </div>
 
       {/* PLAIN ENGLISH MODE: Community Rating Card */}
-      {isPlain ? (
+      <div suppressHydrationWarning>
+        {isPlain ? (
         <div className="space-y-4">
           <div className="p-4 sm:p-5 rounded-xl bg-[#120909] border border-[#590907]/60 space-y-2 shadow-md">
             <div className="flex items-center gap-2">
@@ -235,6 +243,7 @@ export default function ResponseTimeTracker({
           </div>
         </div>
       )}
+      </div>
     </div>
   );
 }

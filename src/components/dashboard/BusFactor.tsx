@@ -1,5 +1,6 @@
 'use client';
 
+import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Users, AlertTriangle, ShieldCheck, User, Users2, GitBranch, Scale, ShieldAlert } from 'lucide-react';
 import type { BusFactorMetrics, Contributor } from '@/lib/github';
@@ -19,7 +20,14 @@ export default function BusFactor({
   contributors,
 }: BusFactorProps) {
   const { audienceMode } = useAppStore();
-  const isPlain = audienceMode === 'plain';
+  const [isMounted, setIsMounted] = useState(false);
+
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
+
+  // Standardize SSR default until the client component has cleanly mounted
+  const isPlain = isMounted && audienceMode === 'plain';
 
   const finalMetrics = metrics || busFactor || {
     busFactorScore: 1,
@@ -84,43 +92,46 @@ export default function BusFactor({
             <Users size={17} />
           </div>
           <div>
-            <span className="text-[11px] font-semibold tracking-[0.2em] uppercase text-[#A5A79B]/80 font-mono block">
+            <span suppressHydrationWarning className="text-[11px] font-semibold tracking-[0.2em] uppercase text-[#A5A79B]/80 font-mono block">
               {isPlain ? 'TEAM STRUCTURE' : 'PARETO BUS FACTOR & KEY PERSON RISK'}
             </span>
-            <h3 className="text-xl font-bold tracking-tight text-[#E8D2B5] font-sans mt-0.5">
+            <h3 suppressHydrationWarning className="text-xl font-bold tracking-tight text-[#E8D2B5] font-sans mt-0.5">
               {isPlain ? 'Team Dynamics' : 'Contributor Centralization'}
             </h3>
           </div>
         </div>
 
         {/* High-visibility Status Badge */}
-        {isPlain ? (
-          isSolo ? (
-            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-sans font-bold bg-[#590907] text-[#E8D2B5] border border-[#590907] shadow-sm">
-              <User size={12} className="text-[#E8D2B5]" />
-              Solo Builder
+        <div suppressHydrationWarning>
+          {isPlain ? (
+            isSolo ? (
+              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-sans font-bold bg-[#590907] text-[#E8D2B5] border border-[#590907] shadow-sm">
+                <User size={12} className="text-[#E8D2B5]" />
+                Solo Builder
+              </span>
+            ) : (
+              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-sans font-bold bg-[#120909] text-[#E8D2B5] border border-[#A5A79B]/25 shadow-sm">
+                <Users2 size={12} className="text-[#E8D2B5]" />
+                Distributed Team
+              </span>
+            )
+          ) : isSolo ? (
+            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-mono font-bold bg-[#590907] text-[#E8D2B5] border border-[#590907] shadow-sm">
+              <AlertTriangle size={12} className="text-[#E8D2B5]" />
+              SOLO MAINTAINER HAZARD
             </span>
           ) : (
-            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-sans font-bold bg-[#120909] text-[#E8D2B5] border border-[#A5A79B]/25 shadow-sm">
-              <Users2 size={12} className="text-[#E8D2B5]" />
-              Distributed Team
+            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-mono font-bold bg-[#120909] text-[#E8D2B5] border border-[#A5A79B]/25 shadow-sm">
+              <ShieldCheck size={12} className="text-[#E8D2B5]" />
+              DECENTRALIZED ({finalMetrics.busFactorScore}/10)
             </span>
-          )
-        ) : isSolo ? (
-          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-mono font-bold bg-[#590907] text-[#E8D2B5] border border-[#590907] shadow-sm">
-            <AlertTriangle size={12} className="text-[#E8D2B5]" />
-            SOLO MAINTAINER HAZARD
-          </span>
-        ) : (
-          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-mono font-bold bg-[#120909] text-[#E8D2B5] border border-[#A5A79B]/25 shadow-sm">
-            <ShieldCheck size={12} className="text-[#E8D2B5]" />
-            DECENTRALIZED ({finalMetrics.busFactorScore}/10)
-          </span>
-        )}
+          )}
+        </div>
       </div>
 
       {/* Main Mode-Aware Stat Card */}
-      {isPlain ? (
+      <div suppressHydrationWarning>
+        {isPlain ? (
         <div className="p-4 rounded-xl bg-[#120909] border border-[#A5A79B]/20 relative z-10 flex flex-col gap-2">
           <div className="flex items-center justify-between">
             <span className="text-xs font-sans font-semibold uppercase tracking-wider text-[#A5A79B]">
@@ -196,15 +207,16 @@ export default function BusFactor({
           </div>
         </div>
       )}
+      </div>
 
       {/* Contributor Split Progress Bar */}
       <div className="space-y-1.5 relative z-10">
         <div className="flex items-center justify-between text-xs font-sans">
-          <span className="flex items-center gap-1.5 text-[#E8D2B5] font-medium">
+          <span suppressHydrationWarning className="flex items-center gap-1.5 text-[#E8D2B5] font-medium">
             <span className="w-2 h-2 rounded-full bg-[#E8D2B5] shadow-[0_0_6px_rgba(232,210,181,0.5)]" />
             {isPlain ? 'Lead Builder' : 'Dominant Contributor'} ({topPct}%)
           </span>
-          <span className="flex items-center gap-1.5 text-[#A5A79B]">
+          <span suppressHydrationWarning className="flex items-center gap-1.5 text-[#A5A79B]">
             <span className="w-2 h-2 rounded-full bg-[#590907]" />
             {isPlain ? 'Other Contributors' : 'Long-Tail Commits'} ({othersPct}%)
           </span>
@@ -221,7 +233,7 @@ export default function BusFactor({
       </div>
 
       {/* Conversational Narrative */}
-      <p className="font-sans text-sm text-[#A5A79B] leading-relaxed pt-2 border-t border-[#A5A79B]/15 relative z-10">
+      <p suppressHydrationWarning className="font-sans text-sm text-[#A5A79B] leading-relaxed pt-2 border-t border-[#A5A79B]/15 relative z-10">
         {isPlain ? (
           isSolo ? (
             <>

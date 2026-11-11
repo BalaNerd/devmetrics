@@ -1,5 +1,6 @@
 'use client';
 
+import { useState, useEffect } from 'react';
 import { Check, X, ShieldCheck, Sparkles, GitBranch, ShieldAlert, FileText, Tag, Lock } from 'lucide-react';
 import type { HealthMetrics } from '@/lib/github';
 import { calculateHealthGrade } from '@/lib/metrics';
@@ -21,7 +22,14 @@ interface CheckItem {
 
 export default function HealthChecklist({ health, checklist, grade: customGrade }: HealthChecklistProps) {
   const { audienceMode } = useAppStore();
-  const isPlain = audienceMode === 'plain';
+  const [isMounted, setIsMounted] = useState(false);
+
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
+
+  // Standardize SSR default until the client component has cleanly mounted
+  const isPlain = isMounted && audienceMode === 'plain';
 
   const defaultHealth: HealthMetrics = health || checklist || {
     hasReadme: true,
@@ -192,17 +200,17 @@ export default function HealthChecklist({ health, checklist, grade: customGrade 
             <ShieldCheck size={17} />
           </div>
           <div>
-            <span className="text-[11px] font-semibold tracking-[0.2em] uppercase text-[#A5A79B]/80 font-mono block">
+            <span suppressHydrationWarning className="text-[11px] font-semibold tracking-[0.2em] uppercase text-[#A5A79B]/80 font-mono block">
               {isPlain ? 'PORTFOLIO READINESS' : 'HYGIENE, SECURITY & GOVERNANCE'}
             </span>
-            <h3 className="text-xl font-bold tracking-tight text-[#E8D2B5] font-sans mt-0.5">
+            <h3 suppressHydrationWarning className="text-xl font-bold tracking-tight text-[#E8D2B5] font-sans mt-0.5">
               {isPlain ? 'Portfolio Readiness Score' : 'Hygiene & Governance'}
             </h3>
           </div>
         </div>
 
         {/* Letter Grade Badge */}
-        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#590907]/30 border border-[#590907] shadow-sm">
+        <div suppressHydrationWarning className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#590907]/30 border border-[#590907] shadow-sm">
           <span className="font-mono text-base sm:text-lg font-black text-[#E8D2B5]">
             GRADE {grade}
           </span>
@@ -214,7 +222,7 @@ export default function HealthChecklist({ health, checklist, grade: customGrade 
 
       {/* Mode-Aware Callout Banner in Plain English */}
       {isPlain && (
-        <div className="p-3.5 rounded-xl bg-[#120909] border border-[#590907]/50 flex items-start gap-2.5 relative z-10">
+        <div suppressHydrationWarning className="p-3.5 rounded-xl bg-[#120909] border border-[#590907]/50 flex items-start gap-2.5 relative z-10">
           <Sparkles size={16} className="text-[#E8D2B5] shrink-0 mt-0.5" />
           <p className="text-xs sm:text-sm font-sans text-[#E8D2B5] leading-relaxed">
             {readinessNarrative}
@@ -223,7 +231,7 @@ export default function HealthChecklist({ health, checklist, grade: customGrade 
       )}
 
       {/* Responsive Checklist: 1-col on Mobile (< 640px), 2-col on Tablet & Desktop (sm:) */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-2.5 relative z-10">
+      <div suppressHydrationWarning className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-2.5 relative z-10">
         {checks.map((item) => (
           <div
             key={item.id}

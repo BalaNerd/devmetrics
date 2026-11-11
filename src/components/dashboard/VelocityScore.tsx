@@ -1,5 +1,6 @@
 'use client';
 
+import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Zap, TrendingUp, TrendingDown, Minus, Clock, Calendar, GitCommit, GitPullRequest, Activity } from 'lucide-react';
 import type { CommitEntry, ChurnMetrics } from '@/lib/github';
@@ -27,7 +28,14 @@ export default function VelocityScore({
   churn,
 }: VelocityScoreProps) {
   const { audienceMode } = useAppStore();
-  const isPlain = audienceMode === 'plain';
+  const [isMounted, setIsMounted] = useState(false);
+
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
+
+  // Standardize SSR default until the client component has cleanly mounted
+  const isPlain = isMounted && audienceMode === 'plain';
 
   const finalScore = score ?? velocityScore ?? 0;
   const finalCadence = cadence ?? commitFrequency ?? 0;
@@ -101,10 +109,10 @@ export default function VelocityScore({
             <Zap size={17} />
           </div>
           <div>
-            <span className="text-[11px] font-semibold tracking-[0.2em] uppercase text-[#A5A79B]/80 font-mono block">
+            <span suppressHydrationWarning className="text-[11px] font-semibold tracking-[0.2em] uppercase text-[#A5A79B]/80 font-mono block">
               {isPlain ? 'PROJECT PULSE' : 'THROUGHPUT & VELOCITY CADENCE'}
             </span>
-            <h3 className="text-xl font-bold tracking-tight text-[#E8D2B5] font-sans mt-0.5">
+            <h3 suppressHydrationWarning className="text-xl font-bold tracking-tight text-[#E8D2B5] font-sans mt-0.5">
               {isPlain ? 'Shipping Vitality' : 'Throughput & Cadence'}
             </h3>
           </div>
@@ -113,6 +121,7 @@ export default function VelocityScore({
         {/* Dynamic Mode Badge */}
         {isPlain ? (
           <div
+            suppressHydrationWarning
             className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-sans font-bold border shadow-sm ${
               isActivePulse
                 ? 'bg-[#590907] text-[#E8D2B5] border-[#590907]'
@@ -122,7 +131,7 @@ export default function VelocityScore({
             <span>{isActivePulse ? '⚡ Active Development' : '💤 Inactive Maintenance'}</span>
           </div>
         ) : (
-          <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-mono bg-[#120909] border border-[#A5A79B]/20 text-[#E8D2B5]">
+          <div suppressHydrationWarning className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-mono bg-[#120909] border border-[#A5A79B]/20 text-[#E8D2B5]">
             {trendIcon}
             <span className="uppercase text-[10px] tracking-wider font-semibold">{trendDirection} MOMENTUM</span>
           </div>
@@ -167,7 +176,7 @@ export default function VelocityScore({
             <span className="text-4xl md:text-5xl font-extrabold font-mono text-[#E8D2B5] tracking-tight tabular-nums">
               {finalScore}
             </span>
-            <span className="text-[10px] uppercase font-mono tracking-widest text-[#A5A79B] font-semibold mt-0.5">
+            <span suppressHydrationWarning className="text-[10px] uppercase font-mono tracking-widest text-[#A5A79B] font-semibold mt-0.5">
               {isPlain ? 'Pulse Score' : '/ 100'}
             </span>
           </div>
@@ -175,80 +184,82 @@ export default function VelocityScore({
       </div>
 
       {/* Mode-Aware Diagnostic Telemetry Stack */}
-      {isPlain ? (
-        <div className="relative z-10 p-3.5 rounded-xl bg-[#120909] border border-[#A5A79B]/15 flex items-center justify-between gap-3">
-          <div className="flex flex-col gap-0.5">
-            <span className="font-sans text-[10px] uppercase tracking-wider text-[#A5A79B]/80 font-semibold">
-              Project Status
-            </span>
-            <span className="font-sans text-sm font-bold text-[#E8D2B5]">
-              {isActivePulse ? 'Active Shipping' : 'Maintenance Mode'}
-            </span>
+      <div suppressHydrationWarning>
+        {isPlain ? (
+          <div className="relative z-10 p-3.5 rounded-xl bg-[#120909] border border-[#A5A79B]/15 flex items-center justify-between gap-3">
+            <div className="flex flex-col gap-0.5">
+              <span className="font-sans text-[10px] uppercase tracking-wider text-[#A5A79B]/80 font-semibold">
+                Project Status
+              </span>
+              <span className="font-sans text-sm font-bold text-[#E8D2B5]">
+                {isActivePulse ? 'Active Shipping' : 'Maintenance Mode'}
+              </span>
+            </div>
+            <div className="flex flex-col gap-0.5 text-right">
+              <span className="font-sans text-[10px] uppercase tracking-wider text-[#A5A79B]/80 font-semibold">
+                Recency
+              </span>
+              <span className="font-sans text-xs sm:text-sm font-semibold text-[#E8D2B5]">
+                {daysSinceLastCommit === 0
+                  ? 'Pushed today'
+                  : daysSinceLastCommit === 1
+                  ? 'Pushed yesterday'
+                  : `${daysSinceLastCommit} days ago`}
+              </span>
+            </div>
           </div>
-          <div className="flex flex-col gap-0.5 text-right">
-            <span className="font-sans text-[10px] uppercase tracking-wider text-[#A5A79B]/80 font-semibold">
-              Recency
-            </span>
-            <span className="font-sans text-xs sm:text-sm font-semibold text-[#E8D2B5]">
-              {daysSinceLastCommit === 0
-                ? 'Pushed today'
-                : daysSinceLastCommit === 1
-                ? 'Pushed yesterday'
-                : `${daysSinceLastCommit} days ago`}
-            </span>
-          </div>
-        </div>
-      ) : (
-        /* Technical Mode: 4-Metric Raw Commit Telemetry Grid (Requirement 3.1) */
-        <div className="relative z-10 grid grid-cols-2 gap-2.5 p-3.5 rounded-xl bg-[#120909] border border-[#A5A79B]/15">
-          {/* Weekly Velocity */}
-          <div className="flex flex-col gap-0.5 p-2 rounded-lg bg-[#180d0d] border border-[#A5A79B]/10">
-            <span className="font-mono text-[9px] uppercase tracking-wider text-[#A5A79B] flex items-center gap-1">
-              <Clock size={10} className="text-[#A5A79B]" />
-              Commit Velocity
-            </span>
-            <span className="font-mono text-sm sm:text-base font-bold text-[#E8D2B5] tabular-nums">
-              {finalCadence.toFixed(1)} <span className="text-[10px] text-[#A5A79B] font-normal">commits/wk</span>
-            </span>
-          </div>
+        ) : (
+          /* Technical Mode: 4-Metric Raw Commit Telemetry Grid (Requirement 3.1) */
+          <div className="relative z-10 grid grid-cols-2 gap-2.5 p-3.5 rounded-xl bg-[#120909] border border-[#A5A79B]/15">
+            {/* Weekly Velocity */}
+            <div className="flex flex-col gap-0.5 p-2 rounded-lg bg-[#180d0d] border border-[#A5A79B]/10">
+              <span className="font-mono text-[9px] uppercase tracking-wider text-[#A5A79B] flex items-center gap-1">
+                <Clock size={10} className="text-[#A5A79B]" />
+                Commit Velocity
+              </span>
+              <span className="font-mono text-sm sm:text-base font-bold text-[#E8D2B5] tabular-nums">
+                {finalCadence.toFixed(1)} <span className="text-[10px] text-[#A5A79B] font-normal">commits/wk</span>
+              </span>
+            </div>
 
-          {/* 30-Day Commit Variance */}
-          <div className="flex flex-col gap-0.5 p-2 rounded-lg bg-[#180d0d] border border-[#A5A79B]/10 text-right">
-            <span className="font-mono text-[9px] uppercase tracking-wider text-[#A5A79B] flex items-center justify-end gap-1">
-              <Activity size={10} className="text-[#A5A79B]" />
-              30d Variance
-            </span>
-            <span className="font-mono text-sm sm:text-base font-bold text-[#E8D2B5] tabular-nums">
-              {varianceStr}
-            </span>
-          </div>
+            {/* 30-Day Commit Variance */}
+            <div className="flex flex-col gap-0.5 p-2 rounded-lg bg-[#180d0d] border border-[#A5A79B]/10 text-right">
+              <span className="font-mono text-[9px] uppercase tracking-wider text-[#A5A79B] flex items-center justify-end gap-1">
+                <Activity size={10} className="text-[#A5A79B]" />
+                30d Variance
+              </span>
+              <span className="font-mono text-sm sm:text-base font-bold text-[#E8D2B5] tabular-nums">
+                {varianceStr}
+              </span>
+            </div>
 
-          {/* Churn Ratio (Deletions / Additions) */}
-          <div className="flex flex-col gap-0.5 p-2 rounded-lg bg-[#180d0d] border border-[#A5A79B]/10">
-            <span className="font-mono text-[9px] uppercase tracking-wider text-[#A5A79B] flex items-center gap-1">
-              <GitPullRequest size={10} className="text-[#A5A79B]" />
-              Code Churn Ratio
-            </span>
-            <span className="font-mono text-sm sm:text-base font-bold text-[#E8D2B5] tabular-nums">
-              {churnRatio.toFixed(2)} <span className="text-[10px] text-[#A5A79B] font-normal">del/add</span>
-            </span>
-          </div>
+            {/* Churn Ratio (Deletions / Additions) */}
+            <div className="flex flex-col gap-0.5 p-2 rounded-lg bg-[#180d0d] border border-[#A5A79B]/10">
+              <span className="font-mono text-[9px] uppercase tracking-wider text-[#A5A79B] flex items-center gap-1">
+                <GitPullRequest size={10} className="text-[#A5A79B]" />
+                Code Churn Ratio
+              </span>
+              <span className="font-mono text-sm sm:text-base font-bold text-[#E8D2B5] tabular-nums">
+                {churnRatio.toFixed(2)} <span className="text-[10px] text-[#A5A79B] font-normal">del/add</span>
+              </span>
+            </div>
 
-          {/* Latest Commit SHA */}
-          <div className="flex flex-col gap-0.5 p-2 rounded-lg bg-[#180d0d] border border-[#A5A79B]/10 text-right">
-            <span className="font-mono text-[9px] uppercase tracking-wider text-[#A5A79B] flex items-center justify-end gap-1">
-              <GitCommit size={10} className="text-[#A5A79B]" />
-              Latest SHA
-            </span>
-            <span className="font-mono text-xs sm:text-sm font-bold text-[#E8D2B5] truncate">
-              #{latestSha}
-            </span>
+            {/* Latest Commit SHA */}
+            <div className="flex flex-col gap-0.5 p-2 rounded-lg bg-[#180d0d] border border-[#A5A79B]/10 text-right">
+              <span className="font-mono text-[9px] uppercase tracking-wider text-[#A5A79B] flex items-center justify-end gap-1">
+                <GitCommit size={10} className="text-[#A5A79B]" />
+                Latest SHA
+              </span>
+              <span className="font-mono text-xs sm:text-sm font-bold text-[#E8D2B5] truncate">
+                #{latestSha}
+              </span>
+            </div>
           </div>
-        </div>
-      )}
+        )}
+      </div>
 
       {/* Short Explanatory Narrative Copy */}
-      <p className="font-sans text-sm text-[#A5A79B] leading-relaxed pt-2 border-t border-[#A5A79B]/15 relative z-10">
+      <p suppressHydrationWarning className="font-sans text-sm text-[#A5A79B] leading-relaxed pt-2 border-t border-[#A5A79B]/15 relative z-10">
         {isPlain ? (
           isActivePulse ? (
             <>

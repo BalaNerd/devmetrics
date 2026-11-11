@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { DollarSign, Cloud, Server, Cpu, Database, CheckCircle2, ShieldCheck, Zap } from 'lucide-react';
 import { useAppStore } from '@/store/useAppStore';
 import type { RepoData } from '@/lib/github';
@@ -14,7 +14,14 @@ type ScaleTier = 'hobby' | 'growth' | 'scale';
 
 export default function CostEstimator({ data, embedded = false }: CostEstimatorProps) {
   const { audienceMode } = useAppStore();
-  const isPlain = audienceMode === 'plain';
+  const [isMounted, setIsMounted] = useState(false);
+
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
+
+  // Standardize SSR default until the client component has cleanly mounted
+  const isPlain = isMounted && audienceMode === 'plain';
   const [scaleTier, setScaleTier] = useState<ScaleTier>('hobby');
 
   const { repo, velocity, health, languages } = data;
@@ -77,10 +84,10 @@ export default function CostEstimator({ data, embedded = false }: CostEstimatorP
             <DollarSign size={17} />
           </div>
           <div>
-            <span className="font-mono text-[10px] sm:text-xs font-semibold tracking-[0.2em] uppercase text-[#A5A79B]/80 block">
+            <span suppressHydrationWarning className="font-mono text-[10px] sm:text-xs font-semibold tracking-[0.2em] uppercase text-[#A5A79B]/80 block">
               {isPlain ? 'CLOUD COST ESTIMATOR' : 'CLOUD INFRASTRUCTURE & RUNTIME ESTIMATOR'}
             </span>
-            <h3 className="font-sans text-base sm:text-lg font-bold text-[#E8D2B5] tracking-tight mt-0.5">
+            <h3 suppressHydrationWarning className="font-sans text-base sm:text-lg font-bold text-[#E8D2B5] tracking-tight mt-0.5">
               {isPlain ? 'Hosting Cost Projection' : `Architecture: ${detectedFramework}`}
             </h3>
           </div>
@@ -88,7 +95,7 @@ export default function CostEstimator({ data, embedded = false }: CostEstimatorP
 
         {/* Technical Scale Tier Switcher */}
         {!isPlain && (
-          <div className="inline-flex items-center p-1 rounded-xl bg-[#120909] border border-[#A5A79B]/20">
+          <div suppressHydrationWarning className="inline-flex items-center p-1 rounded-xl bg-[#120909] border border-[#A5A79B]/20">
             {(['hobby', 'growth', 'scale'] as const).map((tier) => (
               <button
                 key={tier}
@@ -108,7 +115,8 @@ export default function CostEstimator({ data, embedded = false }: CostEstimatorP
       </div>
 
       {/* PLAIN ENGLISH MODE: Clear Zero-Cost / Free-Tier Card */}
-      {isPlain ? (
+      <div suppressHydrationWarning>
+        {isPlain ? (
         <div className="space-y-4">
           <div className="p-4 sm:p-5 rounded-xl bg-[#120909] border border-[#590907]/60 space-y-3 shadow-md">
             <div className="flex items-center justify-between flex-wrap gap-2">
@@ -231,6 +239,7 @@ export default function CostEstimator({ data, embedded = false }: CostEstimatorP
           </div>
         </div>
       )}
+      </div>
     </div>
   );
 }

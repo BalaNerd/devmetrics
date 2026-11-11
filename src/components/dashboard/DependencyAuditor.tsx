@@ -34,7 +34,14 @@ export default function DependencyAuditor({
   embedded = false,
 }: DependencyAuditorProps) {
   const { audienceMode, githubToken } = useAppStore();
-  const isPlain = audienceMode === 'plain';
+  const [isMounted, setIsMounted] = useState(false);
+
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
+
+  // Standardize SSR default until the client component has cleanly mounted
+  const isPlain = isMounted && audienceMode === 'plain';
 
   const [loading, setLoading] = useState(true);
   const [packageJson, setPackageJson] = useState<Record<string, any> | null>(null);
@@ -107,16 +114,16 @@ export default function DependencyAuditor({
             <Package size={17} />
           </div>
           <div>
-            <span className="font-mono text-[10px] sm:text-xs font-semibold tracking-[0.2em] uppercase text-[#A5A79B]/80 block">
+            <span suppressHydrationWarning className="font-mono text-[10px] sm:text-xs font-semibold tracking-[0.2em] uppercase text-[#A5A79B]/80 block">
               {isPlain ? 'DEPENDENCY HEALTH & VULNERABILITIES' : 'SUPPLY-CHAIN DEPENDENCY AUDITOR'}
             </span>
-            <h3 className="font-sans text-base sm:text-lg font-bold text-[#E8D2B5] tracking-tight mt-0.5">
+            <h3 suppressHydrationWarning className="font-sans text-base sm:text-lg font-bold text-[#E8D2B5] tracking-tight mt-0.5">
               {isPlain ? 'Package Security & Libraries' : `Dependency Architecture (${totalDepsCount || 'Standard Native'})`}
             </h3>
           </div>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div suppressHydrationWarning className="flex items-center gap-2">
           {isPlain ? (
             <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-sans font-bold bg-[#590907]/30 border border-[#590907] text-[#E8D2B5]">
               <ShieldCheck size={13} className="text-[#E8D2B5]" />

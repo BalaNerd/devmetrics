@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Terminal,
@@ -33,7 +33,14 @@ export default function EngineeringDirectives({
 }: EngineeringDirectivesProps) {
   const directives = propDirectives || (data ? generateEngineeringDirectives(data) : []);
   const { audienceMode } = useAppStore();
-  const isPlain = audienceMode === 'plain';
+  const [isMounted, setIsMounted] = useState(false);
+
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
+
+  // Standardize SSR default until the client component has cleanly mounted
+  const isPlain = isMounted && audienceMode === 'plain';
   const [openIds, setOpenIds] = useState<string[]>([directives[0]?.id || '']);
   const [copiedId, setCopiedId] = useState<string | null>(null);
 
@@ -126,14 +133,14 @@ export default function EngineeringDirectives({
           </div>
           <div>
             <div className="flex items-center gap-2">
-              <h3 className="font-sans text-base sm:text-lg font-bold text-[#E8D2B5] tracking-tight">
+              <h3 suppressHydrationWarning className="font-sans text-base sm:text-lg font-bold text-[#E8D2B5] tracking-tight">
                 {isPlain ? 'Executive Directives & Fixes' : 'Engineering Directives & Architecture Fixes'}
               </h3>
               <span className="bg-[#120909] border border-[#A5A79B]/20 text-[#E8D2B5] font-mono text-[11px] px-2.5 py-0.5 rounded-full">
                 {directives.length} Prescriptions
               </span>
             </div>
-            <p className="font-sans text-xs text-[#A5A79B] mt-0.5 hidden sm:block">
+            <p suppressHydrationWarning className="font-sans text-xs text-[#A5A79B] mt-0.5 hidden sm:block">
               {isPlain
                 ? 'High-level improvement takeaways for recruiters, non-technical stakeholders, and founders'
                 : 'Algorithmic telemetry audit, CI/CD gap detection & automated production prescriptions'}

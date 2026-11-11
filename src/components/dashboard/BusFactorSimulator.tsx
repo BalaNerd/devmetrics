@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { Flame, AlertTriangle, ShieldCheck, UserX, TrendingDown, GitPullRequest, HelpCircle } from 'lucide-react';
 import { useAppStore } from '@/store/useAppStore';
 import type { RepoData } from '@/lib/github';
@@ -12,7 +12,14 @@ interface BusFactorSimulatorProps {
 
 export default function BusFactorSimulator({ data, embedded = false }: BusFactorSimulatorProps) {
   const { audienceMode } = useAppStore();
-  const isPlain = audienceMode === 'plain';
+  const [isMounted, setIsMounted] = useState(false);
+
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
+
+  // Standardize SSR default until the client component has cleanly mounted
+  const isPlain = isMounted && audienceMode === 'plain';
   const [absenceDays, setAbsenceDays] = useState(30);
 
   const { velocity, busFactor, repo } = data;
@@ -60,16 +67,16 @@ export default function BusFactorSimulator({ data, embedded = false }: BusFactor
             <Flame size={17} />
           </div>
           <div>
-            <span className="font-mono text-[10px] sm:text-xs font-semibold tracking-[0.2em] uppercase text-[#A5A79B]/80 block">
+            <span suppressHydrationWarning className="font-mono text-[10px] sm:text-xs font-semibold tracking-[0.2em] uppercase text-[#A5A79B]/80 block">
               {isPlain ? 'SUCCESSION PLANNING & RESILIENCE' : 'KEY-PERSON BURNOUT & BUS FACTOR SIMULATION'}
             </span>
-            <h3 className="font-sans text-base sm:text-lg font-bold text-[#E8D2B5] tracking-tight mt-0.5">
+            <h3 suppressHydrationWarning className="font-sans text-base sm:text-lg font-bold text-[#E8D2B5] tracking-tight mt-0.5">
               {isPlain ? 'What Happens If the Lead Developer Steps Away?' : `Simulating Absence: @${busFactor.dominantContributor}`}
             </h3>
           </div>
         </div>
 
-        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-mono bg-[#120909] border border-[#A5A79B]/20 text-[#E8D2B5]">
+        <div suppressHydrationWarning className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-mono bg-[#120909] border border-[#A5A79B]/20 text-[#E8D2B5]">
           <span className={isHighRisk ? 'text-[#E8D2B5] font-bold' : 'text-[#E8D2B5] font-semibold'}>
             {isHighRisk ? 'Critical Maintainer Lock-In' : 'Decentralized Resilience'}
           </span>
@@ -107,7 +114,8 @@ export default function BusFactorSimulator({ data, embedded = false }: BusFactor
       </div>
 
       {/* PLAIN ENGLISH MODE: Conversational Impact Cards */}
-      {isPlain ? (
+      <div suppressHydrationWarning>
+        {isPlain ? (
         <div className="space-y-4">
           <div className="p-4 rounded-xl bg-[#120909] border border-[#590907]/60 space-y-2">
             <div className="flex items-center gap-2">
@@ -221,6 +229,7 @@ export default function BusFactorSimulator({ data, embedded = false }: BusFactor
           </div>
         </div>
       )}
+      </div>
     </div>
   );
 }

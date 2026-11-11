@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { Clock, Calendar, Moon, Sun, Flame } from 'lucide-react';
 import type { PunchCardData, CommitActivity } from '@/lib/github';
 import { useAppStore } from '@/store/useAppStore';
@@ -94,7 +94,14 @@ export default function PunchCard({
   embedded = false,
 }: PunchCardProps) {
   const { audienceMode } = useAppStore();
-  const isPlain = audienceMode === 'plain';
+  const [isMounted, setIsMounted] = useState(false);
+
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
+
+  // Standardize SSR default until the client component has cleanly mounted
+  const isPlain = isMounted && audienceMode === 'plain';
 
   const [selectedRange, setSelectedRange] = useState<TimeRange>('90d');
   const [hoveredCell, setHoveredCell] = useState<{
@@ -195,17 +202,17 @@ export default function PunchCard({
             <Clock size={17} />
           </div>
           <div>
-            <span className="font-sans text-[10px] sm:text-xs font-semibold uppercase tracking-[0.2em] text-[#A5A79B]/80 font-mono block">
+            <span suppressHydrationWarning className="font-sans text-[10px] sm:text-xs font-semibold uppercase tracking-[0.2em] text-[#A5A79B]/80 font-mono block">
               {isPlain ? 'DEVELOPMENT HABITS & CADENCE' : '7×24 COMMIT HEATMAP'}
             </span>
-            <h3 className="font-sans text-base sm:text-lg font-bold text-[#E8D2B5] tracking-tight mt-0.5">
+            <h3 suppressHydrationWarning className="font-sans text-base sm:text-lg font-bold text-[#E8D2B5] tracking-tight mt-0.5">
               {isPlain ? 'Weekly Work Rhythm & Active Hours' : 'Weekly Rhythm & Shipping Distribution'}
             </h3>
           </div>
         </div>
 
         {/* Live Hover Tooltip / Status readout */}
-        <div className="h-8 px-3 rounded-xl bg-[#120909] border border-[#A5A79B]/20 flex items-center text-xs font-sans text-[#E8D2B5] shadow-sm">
+        <div suppressHydrationWarning className="h-8 px-3 rounded-xl bg-[#120909] border border-[#A5A79B]/20 flex items-center text-xs font-sans text-[#E8D2B5] shadow-sm">
           {hoveredCell ? (
             <span>
               <strong className="text-[#E8D2B5] font-semibold">{hoveredCell.dayName}</strong> at{' '}
@@ -227,7 +234,7 @@ export default function PunchCard({
 
       {/* PLAIN ENGLISH MODE: Work-Rhythm Verdict Card */}
       {isPlain && (
-        <div className="p-4 rounded-xl bg-[#120909] border border-[#590907]/60 space-y-2 relative z-10 shadow-md">
+        <div suppressHydrationWarning className="p-4 rounded-xl bg-[#120909] border border-[#590907]/60 space-y-2 relative z-10 shadow-md">
           <div className="flex items-center gap-2">
             <span className="text-sm sm:text-base font-bold text-[#E8D2B5] font-sans">
               {rhythmStats.primaryVerdict}
