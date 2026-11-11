@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import {
   Search,
@@ -86,6 +86,11 @@ const BENCHMARK_PROFILES: BenchmarkProfile[] = [
 export default function CommandCockpit() {
   const [inputValue, setInputValue] = useState('');
   const [selectedTarget, setSelectedTarget] = useState<string | null>(null);
+  const [isMounted, setIsMounted] = useState(false);
+
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
 
   const { setCurrentRepo, recentSearches } = useAppStore();
   const { fetchRepo } = useRepo();
@@ -157,7 +162,7 @@ export default function CommandCockpit() {
         </form>
 
         {/* Recent Searches mini-strip (if available) */}
-        {recentSearches.length > 0 && (
+        {isMounted && recentSearches && recentSearches.length > 0 && (
           <div className="flex items-center justify-center gap-2 mt-3 flex-wrap">
             <span className="text-[10px] font-mono uppercase tracking-wider text-[#A5A79B]/60">Recent:</span>
             {recentSearches.slice(0, 3).map((item) => (
@@ -273,3 +278,4 @@ export default function CommandCockpit() {
     </div>
   );
 }
+

@@ -27,6 +27,11 @@ export default function CommandBar() {
 
   const [searchResults, setSearchResults] = useState<RepoSearchResult[]>([]);
   const [isSearching, setIsSearching] = useState(false);
+  const [isMounted, setIsMounted] = useState(false);
+
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
 
   // Keyboard shortcut listener
   useEffect(() => {
@@ -208,7 +213,7 @@ export default function CommandBar() {
                 )}
 
                 {/* Recent Searches */}
-                {recentSearches && recentSearches.length > 0 && (
+                {isMounted && recentSearches && recentSearches.length > 0 && (
                   <div className="pt-2">
                     <div className="flex items-center justify-between mb-2 px-1">
                       <p className="type-kicker text-[10px] flex items-center gap-1.5 text-[#5C6A80]">
