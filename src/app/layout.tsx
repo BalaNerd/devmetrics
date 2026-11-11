@@ -33,7 +33,9 @@ export const metadata: Metadata = {
   title: 'DevMetrics — Engineering Telemetry Cockpit',
   description: 'Executive developer intelligence and repository velocity dashboard',
   icons: {
-    icon: '/favicon.svg',
+    icon: [
+      { url: '/favicon.svg', type: 'image/svg+xml' },
+    ],
   },
   keywords: ['github', 'metrics', 'developer', 'analytics', 'velocity', 'open source'],
   openGraph: {

@@ -23,21 +23,35 @@ export default function Icon() {
           fill="none"
           xmlns="http://www.w3.org/2000/svg"
         >
-          <path
-            d="M8 22C4 16 7 7 15 6C23 5 28 11 26 18C24 25 15 27 10 24"
-            stroke="#590907"
-            strokeWidth="3.5"
-            strokeLinecap="round"
+          {/* Step 1: Base Anchor */}
+          <rect
+            x="5"
+            y="18"
+            width="5.5"
+            height="10"
+            rx="2.5"
+            fill="#A5A79B"
+            fillOpacity="0.85"
           />
-          <path
-            d="M10 24C12 21 15 17 21 16C26 15 27 9 22 7"
-            stroke="#E8D2B5"
-            strokeWidth="2.5"
-            strokeLinecap="round"
+          {/* Step 2: Dominant Telemetry Pillar */}
+          <rect
+            x="13.5"
+            y="4"
+            width="5.5"
+            height="24"
+            rx="2.75"
+            fill="#E8D2B5"
           />
-          <circle cx="21" cy="16" r="3" fill="#E8D2B5" />
-          <circle cx="21" cy="16" r="1.5" fill="#590907" />
-          <circle cx="8" cy="22" r="2.5" fill="#A5A79B" />
+          {/* Step 3: Velocity Branch with Accent Pip */}
+          <rect
+            x="22"
+            y="11"
+            width="5.5"
+            height="17"
+            rx="2.75"
+            fill="#590907"
+          />
+          <circle cx="24.75" cy="14" r="1.5" fill="#E8D2B5" />
         </svg>
       </div>
     ),
