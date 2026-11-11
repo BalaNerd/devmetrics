@@ -48,7 +48,7 @@ function StatusDot() {
 
 export default function Header() {
   const {
-    setCommandBarOpen, currentRepo,
+    setCommandBarOpen, currentRepo, liveUrl, reset, clearLiveAudit,
     audienceMode, setAudienceMode, repoData, setComparisonModalOpen, setToast,
   } = useAppStore();
   const [isMounted, setIsMounted] = useState(false);
@@ -87,21 +87,29 @@ export default function Header() {
     <header className="sticky top-0 z-40 border-b border-[#A5A79B]/15 bg-[#120909]/85 backdrop-blur-2xl transition-all">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between gap-3">
         {/* Logo */}
-        <div className="flex items-center gap-3 shrink-0 min-w-0">
-          <div className="flex items-center justify-center w-9 h-9 rounded-xl bg-gradient-to-br from-[#590907] to-[#77110f] border border-[#E8D2B5]/20 text-[#E8D2B5] shadow-[0_0_15px_rgba(89,9,7,0.45)]">
+        <button
+          type="button"
+          onClick={() => {
+            reset();
+            clearLiveAudit();
+          }}
+          className="flex items-center gap-3 shrink-0 min-w-0 text-left cursor-pointer group"
+          title="Return to DevMetrics Cockpit"
+        >
+          <div className="flex items-center justify-center w-9 h-9 rounded-xl bg-gradient-to-br from-[#590907] to-[#77110f] border border-[#E8D2B5]/20 text-[#E8D2B5] shadow-[0_0_15px_rgba(89,9,7,0.45)] group-hover:scale-105 transition-transform">
             <Zap size={16} strokeWidth={2.5} />
           </div>
           <div className="min-w-0">
-            <div className="font-heading font-extrabold text-base tracking-tight text-[#E8D2B5] leading-none">
+            <div className="font-heading font-extrabold text-base tracking-tight text-[#E8D2B5] leading-none group-hover:text-white transition-colors">
               DevMetrics
             </div>
-            {displayRepo && (
+            {(displayRepo || (isMounted && liveUrl)) && (
               <div className="text-[11px] font-mono text-[#A5A79B] truncate max-w-[140px] sm:max-w-[200px] mt-0.5">
-                {displayRepo}
+                {displayRepo || liveUrl}
               </div>
             )}
           </div>
-        </div>
+        </button>
 
         {/* Search Bar */}
         <button
@@ -110,7 +118,7 @@ export default function Header() {
         >
           <Search size={14} className="text-[#A5A79B] group-hover:text-[#E8D2B5] transition-colors shrink-0" />
           <span className="flex-1 truncate font-mono text-xs text-[#A5A79B]/80 group-hover:text-[#A5A79B] transition-colors">
-            {displayRepo || 'Search repository or paste URL…'}
+            {displayRepo || (isMounted && liveUrl) || 'Search repository or paste URL…'}
           </span>
           <kbd className="shrink-0 px-2 py-0.5 rounded-md font-mono text-[10px] bg-[#120909] border border-[#A5A79B]/20 text-[#E8D2B5]">
             ⌘K
