@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import { Syne, Space_Grotesk, Inter, Space_Mono } from 'next/font/google';
 import './globals.css';
 import AppModals from '@/components/layout/AppModals';
+import { Analytics } from '@vercel/analytics/next';
 
 const syne = Syne({
   subsets: ['latin'],
@@ -29,13 +30,15 @@ const spaceMono = Space_Mono({
 });
 
 export const metadata: Metadata = {
-  title: 'DevMetrics — Executive Developer Intelligence & Repository Velocity',
-  description:
-    'Executive developer intelligence dashboard. Analyze repository velocity, health, contributor distribution, and code activity for any public GitHub repo.',
+  title: 'DevMetrics — Engineering Telemetry Cockpit',
+  description: 'Executive developer intelligence and repository velocity dashboard',
+  icons: {
+    icon: '/favicon.svg',
+  },
   keywords: ['github', 'metrics', 'developer', 'analytics', 'velocity', 'open source'],
   openGraph: {
-    title: 'DevMetrics',
-    description: 'GitHub Repository Intelligence Dashboard',
+    title: 'DevMetrics — Engineering Telemetry Cockpit',
+    description: 'Executive developer intelligence and repository velocity dashboard',
     type: 'website',
   },
 };
@@ -48,11 +51,12 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`${syne.variable} ${spaceGrotesk.variable} ${inter.variable} ${spaceMono.variable}`}
+      className={`${syne.variable} ${spaceGrotesk.variable} ${inter.variable} ${spaceMono.variable} dark`}
       suppressHydrationWarning
     >
-      <body className="min-h-screen text-[#0C1222] antialiased">
+      <body className="min-h-screen bg-[#120909] text-[#E8D2B5] antialiased">
         {children}
+        <Analytics />
         <AppModals />
       </body>
     </html>
