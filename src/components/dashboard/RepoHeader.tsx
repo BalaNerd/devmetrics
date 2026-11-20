@@ -1,7 +1,7 @@
 'use client';
 
 import { motion } from 'framer-motion';
-import { Star, GitFork, AlertCircle, Eye, Tag, ExternalLink, Share2, Archive, GitCompare } from 'lucide-react';
+import { Star, GitFork, AlertCircle, Eye, Tag, ExternalLink, Share2, Archive, ArrowLeftRight } from 'lucide-react';
 import type { Repository } from '@/lib/github';
 import { formatNumber, formatRelativeTime } from '@/lib/metrics';
 import { useAppStore } from '@/store/useAppStore';
@@ -97,7 +97,7 @@ export default function RepoHeader({ repo }: RepoHeaderProps) {
             onClick={() => setComparisonModalOpen(true)}
             className="flex-1 sm:flex-initial inline-flex items-center justify-center gap-2 px-3.5 py-2.5 min-h-[44px] rounded-xl text-xs font-mono font-bold bg-[#120909] hover:bg-[#180d0d] text-[#E8D2B5] border border-[#A5A79B]/25 hover:border-[#590907] transition-all duration-200 ease-out shadow-sm cursor-pointer shrink-0 active:scale-95"
           >
-            <GitCompare size={13} className="text-[#E8D2B5]" />
+            <ArrowLeftRight size={13} className="text-[#E8D2B5]" />
             <span>Compare</span>
           </button>
           <button

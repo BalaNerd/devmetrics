@@ -1,11 +1,10 @@
 'use client';
 
-import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   X,
   Search,
-  GitCompare,
   Trophy,
   ArrowRight,
   ArrowLeftRight,
@@ -23,7 +22,8 @@ import {
   FileText,
   AlertCircle,
   Clock,
-  Layers,
+  Flame,
+  Check,
 } from 'lucide-react';
 import Image from 'next/image';
 import { useAppStore } from '@/store/useAppStore';
@@ -80,7 +80,6 @@ interface PresetMatchup {
 const PRESET_MATCHUPS: PresetMatchup[] = [
   // Repo vs Repo
   { label: 'Zustand vs Redux', typeBadge: 'Repo vs Repo', a: 'pmndrs/zustand', b: 'reduxjs/redux', desc: 'State Architecture' },
-  { label: 'Vite vs Webpack', typeBadge: 'Repo vs Repo', a: 'vitejs/vite', b: 'webpack/webpack', desc: 'Bundler Throughput' },
   { label: 'shadcn/ui vs Radix', typeBadge: 'Repo vs Repo', a: 'shadcn-ui/ui', b: 'radix-ui/primitives', desc: 'Component Standards' },
   { label: 'Next.js vs Remix', typeBadge: 'Repo vs Repo', a: 'vercel/next.js', b: 'remix-run/react-router', desc: 'Fullstack Frameworks' },
   // Live URL vs Live URL
@@ -90,46 +89,20 @@ const PRESET_MATCHUPS: PresetMatchup[] = [
   { label: 'DevMetrics Live vs Source', typeBadge: 'Cross Audit', a: 'https://devmetrics.vercel.app', b: 'BalaNerd/devmetrics', desc: 'Full-Stack Diligence' },
 ];
 
-// ─── ANIMATED NUMBER HELPER ──────────────────────────────────────────────────
-
-function AnimatedNumber({
-  value,
-  suffix = '',
-  decimals = 0,
-}: {
-  value: number;
-  suffix?: string;
-  decimals?: number;
-}) {
-  const [display, setDisplay] = useState(value);
-
-  useEffect(() => {
-    let start = 0;
-    const end = value;
-    const duration = 650;
-    const startTime = performance.now();
-
-    const step = (now: number) => {
-      const progress = Math.min((now - startTime) / duration, 1);
-      const ease = progress === 1 ? 1 : 1 - Math.pow(2, -10 * progress);
-      const current = start + (end - start) * ease;
-      setDisplay(current);
-
-      if (progress < 1) {
-        requestAnimationFrame(step);
-      }
-    };
-
-    const handle = requestAnimationFrame(step);
-    return () => cancelAnimationFrame(handle);
-  }, [value]);
-
-  return (
-    <span suppressHydrationWarning className="tabular-nums font-mono font-extrabold text-[#E8D2B5]">
-      {display.toFixed(decimals)}
-      {suffix}
-    </span>
-  );
+export interface MetricItem {
+  id: string;
+  category: MetricCategory;
+  label: string;
+  icon: typeof Zap;
+  valA: number;
+  valB: number;
+  displayA: string;
+  displayB: string;
+  winner: 'a' | 'b' | 'tie';
+  deltaLabel?: string;
+  maxVal: number;
+  higherIsBetter: boolean;
+  plainVerdict?: string;
 }
 
 // ─── MAIN COMPONENT ──────────────────────────────────────────────────────────
@@ -159,31 +132,13 @@ export default function RepoComparisonModal() {
   const [isSwapped, setIsSwapped] = useState(false);
   const [isMounted, setIsMounted] = useState(false);
 
+  const inputARef = useRef<HTMLInputElement>(null);
+  const inputBRef = useRef<HTMLInputElement>(null);
+  const prevOpenRef = useRef(false);
+
   useEffect(() => {
     setIsMounted(true);
   }, []);
-
-  // Pre-populate Contender A automatically from active repo or live URL
-  useEffect(() => {
-    if (comparisonModalOpen) {
-      const active = liveUrl || repoData?.repo?.full_name || currentRepo || 'vercel/next.js';
-      if (!repoAInput) setRepoAInput(active);
-      if (!repoBInput) setRepoBInput('remix-run/react-router');
-    }
-  }, [comparisonModalOpen, liveUrl, repoData, currentRepo, repoAInput, repoBInput]);
-
-  // Close on Escape key
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') {
-        setComparisonModalOpen(false);
-      }
-    };
-    if (comparisonModalOpen) {
-      window.addEventListener('keydown', handleKeyDown);
-      return () => window.removeEventListener('keydown', handleKeyDown);
-    }
-  }, [comparisonModalOpen, setComparisonModalOpen]);
 
   // Fetch telemetry for a single GitHub repo
   const fetchSingleRepoTelemetry = async (repoInput: string): Promise<RepoTelemetrySummary> => {
@@ -254,21 +209,24 @@ export default function RepoComparisonModal() {
       const liveData = await fetchSingleLiveTelemetry(classification.normalizedUrl);
       return { type: 'live', raw: inputStr, data: liveData };
     } else {
-      const repoData = await fetchSingleRepoTelemetry(inputStr);
-      return { type: 'repo', raw: inputStr, data: repoData };
+      const repoDataResult = await fetchSingleRepoTelemetry(inputStr);
+      return { type: 'repo', raw: inputStr, data: repoDataResult };
     }
   };
 
   // Resilient concurrent dual comparison fetch with per-contender error boundaries
   const handleCompare = useCallback(
     async (aStr: string, bStr: string) => {
-      if (!aStr.trim() && !bStr.trim()) return;
+      const trimmedA = aStr.trim();
+      const trimmedB = bStr.trim();
+      if (!trimmedA && !trimmedB) return;
+
       setLoading(true);
       setComparisonLoading(true);
 
       const results = await Promise.allSettled([
-        aStr.trim() ? fetchTarget(aStr.trim()) : Promise.reject(new Error('Enter Target A')),
-        bStr.trim() ? fetchTarget(bStr.trim()) : Promise.reject(new Error('Enter Target B')),
+        trimmedA ? fetchTarget(trimmedA) : Promise.reject(new Error('Enter Target A')),
+        trimmedB ? fetchTarget(trimmedB) : Promise.reject(new Error('Enter Target B')),
       ]);
 
       if (results[0].status === 'fulfilled') {
@@ -291,14 +249,43 @@ export default function RepoComparisonModal() {
     [githubToken, setComparisonLoading]
   );
 
-  // Auto-run comparison on modal open if not already populated
+  // Initialize input values ONLY when opening from closed state (prevents backspace auto-fill bug)
   useEffect(() => {
-    if (comparisonModalOpen && !targetA && !targetB && !errorA && !errorB) {
-      const a = liveUrl || repoData?.repo?.full_name || currentRepo || 'vercel/next.js';
-      const b = 'remix-run/react-router';
-      handleCompare(a, b);
+    if (comparisonModalOpen && !prevOpenRef.current) {
+      const active = liveUrl || currentRepo || repoData?.repo?.full_name || '';
+      let initialA = repoAInput;
+      let initialB = repoBInput;
+
+      if (!initialA && active) {
+        initialA = active;
+        setRepoAInput(active);
+      }
+
+      if (!initialB) {
+        const isLive = active && (active.startsWith('http') || active.includes('.app') || active.includes('.com') || active.includes('.dev'));
+        initialB = isLive ? 'https://linear.app' : 'remix-run/react-router';
+        setRepoBInput(initialB);
+      }
+
+      if (initialA && initialB && !targetA && !targetB) {
+        handleCompare(initialA, initialB);
+      }
     }
-  }, [comparisonModalOpen, repoData, currentRepo, liveUrl, targetA, targetB, errorA, errorB, handleCompare]);
+    prevOpenRef.current = comparisonModalOpen;
+  }, [comparisonModalOpen, liveUrl, currentRepo, repoData, repoAInput, repoBInput, targetA, targetB, handleCompare]);
+
+  // Close on Escape key
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        setComparisonModalOpen(false);
+      }
+    };
+    if (comparisonModalOpen) {
+      window.addEventListener('keydown', handleKeyDown);
+      return () => window.removeEventListener('keydown', handleKeyDown);
+    }
+  }, [comparisonModalOpen, setComparisonModalOpen]);
 
   // Contender swap handler with 180deg spring rotation
   const handleSwapContenders = () => {
@@ -326,12 +313,12 @@ export default function RepoComparisonModal() {
     return 'cross';
   }, [targetA, targetB]);
 
-  // Compute metric items based on matchup type
-  const metricItems = useMemo(() => {
+  // Compute metric items with delta badges based on matchup type
+  const metricItems = useMemo<MetricItem[]>(() => {
     if (!targetA || !targetB) return [];
 
     const getWinner = (vA: number, vB: number, higherIsBetter = true): 'a' | 'b' | 'tie' => {
-      if (vA === vB) return 'tie';
+      if (Math.abs(vA - vB) < 0.001) return 'tie';
       if (higherIsBetter) return vA > vB ? 'a' : 'b';
       return vA < vB ? 'a' : 'b';
     };
@@ -339,11 +326,17 @@ export default function RepoComparisonModal() {
     if (targetA.type === 'repo' && targetB.type === 'repo') {
       const dA = targetA.data;
       const dB = targetB.data;
+      const velDiff = Math.abs(dA.velocityScore - dB.velocityScore);
+      const cadDiff = Math.abs(dA.cadence - dB.cadence);
+      const govDiff = Math.abs(dA.healthScore - dB.healthScore);
+      const busDiff = Math.abs(dA.busFactorScore - dB.busFactorScore);
+      const starDiff = Math.abs(dA.stars - dB.stars);
+      const issueDiff = Math.abs(dA.openIssues - dB.openIssues);
 
       return [
         {
           id: 'velocity',
-          category: 'speed' as MetricCategory,
+          category: 'speed',
           label: isPlain ? 'Development Velocity' : 'Velocity Score (0–100)',
           icon: Zap,
           valA: dA.velocityScore,
@@ -351,6 +344,7 @@ export default function RepoComparisonModal() {
           displayA: `${dA.velocityScore} / 100`,
           displayB: `${dB.velocityScore} / 100`,
           winner: getWinner(dA.velocityScore, dB.velocityScore),
+          deltaLabel: velDiff > 0 ? `+${velDiff} pts` : 'Tied',
           maxVal: 100,
           higherIsBetter: true,
           plainVerdict: dA.velocityScore > dB.velocityScore
@@ -359,7 +353,7 @@ export default function RepoComparisonModal() {
         },
         {
           id: 'cadence',
-          category: 'speed' as MetricCategory,
+          category: 'speed',
           label: isPlain ? 'Weekly Shipping Cadence' : 'Weekly Commit Cadence',
           icon: Activity,
           valA: dA.cadence,
@@ -367,6 +361,7 @@ export default function RepoComparisonModal() {
           displayA: `${dA.cadence.toFixed(1)} /wk`,
           displayB: `${dB.cadence.toFixed(1)} /wk`,
           winner: getWinner(dA.cadence, dB.cadence),
+          deltaLabel: cadDiff > 0 ? `+${cadDiff.toFixed(1)}/wk` : 'Tied',
           maxVal: Math.max(dA.cadence, dB.cadence, 12),
           higherIsBetter: true,
           plainVerdict: dA.cadence > dB.cadence
@@ -375,7 +370,7 @@ export default function RepoComparisonModal() {
         },
         {
           id: 'governance',
-          category: 'architecture' as MetricCategory,
+          category: 'architecture',
           label: isPlain ? 'Governance & CI/CD Health' : 'Governance & Hygiene Grade',
           icon: ShieldCheck,
           valA: dA.healthScore,
@@ -383,6 +378,7 @@ export default function RepoComparisonModal() {
           displayA: `Grade ${dA.healthGrade} (${dA.healthScore}%)`,
           displayB: `Grade ${dB.healthGrade} (${dB.healthScore}%)`,
           winner: getWinner(dA.healthScore, dB.healthScore),
+          deltaLabel: govDiff > 0 ? `+${govDiff}% hygiene` : 'Tied',
           maxVal: 100,
           higherIsBetter: true,
           plainVerdict: dA.healthScore > dB.healthScore
@@ -391,7 +387,7 @@ export default function RepoComparisonModal() {
         },
         {
           id: 'busFactor',
-          category: 'architecture' as MetricCategory,
+          category: 'architecture',
           label: isPlain ? 'Team Distribution' : 'Bus Factor Decentralization',
           icon: Users,
           valA: dA.busFactorScore,
@@ -399,6 +395,7 @@ export default function RepoComparisonModal() {
           displayA: `${dA.busFactorScore}/10 (${dA.topContributorPct.toFixed(0)}% solo)`,
           displayB: `${dB.busFactorScore}/10 (${dB.topContributorPct.toFixed(0)}% solo)`,
           winner: getWinner(dA.busFactorScore, dB.busFactorScore),
+          deltaLabel: busDiff > 0 ? `+${busDiff} pts spread` : 'Tied',
           maxVal: 10,
           higherIsBetter: true,
           plainVerdict: dA.busFactorScore > dB.busFactorScore
@@ -407,7 +404,7 @@ export default function RepoComparisonModal() {
         },
         {
           id: 'stars',
-          category: 'architecture' as MetricCategory,
+          category: 'architecture',
           label: isPlain ? 'Community Adoption' : 'Community Adoption (Stars)',
           icon: Star,
           valA: dA.stars,
@@ -415,6 +412,7 @@ export default function RepoComparisonModal() {
           displayA: formatNumber(dA.stars),
           displayB: formatNumber(dB.stars),
           winner: getWinner(dA.stars, dB.stars),
+          deltaLabel: starDiff > 0 ? `+${formatNumber(starDiff)} stars` : 'Tied',
           maxVal: Math.max(dA.stars, dB.stars, 1000),
           higherIsBetter: true,
           plainVerdict: dA.stars > dB.stars
@@ -423,7 +421,7 @@ export default function RepoComparisonModal() {
         },
         {
           id: 'issues',
-          category: 'speed' as MetricCategory,
+          category: 'speed',
           label: isPlain ? 'Issue Backlog Turnaround' : 'Open Issue Queue Turnaround',
           icon: AlertCircle,
           valA: dA.openIssues,
@@ -431,6 +429,7 @@ export default function RepoComparisonModal() {
           displayA: `${formatNumber(dA.openIssues)} open`,
           displayB: `${formatNumber(dB.openIssues)} open`,
           winner: getWinner(dA.openIssues, dB.openIssues, false),
+          deltaLabel: issueDiff > 0 ? `${formatNumber(issueDiff)} fewer open` : 'Tied',
           maxVal: Math.max(dA.openIssues, dB.openIssues, 50),
           higherIsBetter: false,
           plainVerdict: dA.openIssues < dB.openIssues
@@ -443,154 +442,151 @@ export default function RepoComparisonModal() {
     if (targetA.type === 'live' && targetB.type === 'live') {
       const dA = targetA.data;
       const dB = targetB.data;
+      const perfDiff = Math.abs(dA.metrics.performance - dB.metrics.performance);
+      const ttfbDiff = Math.abs(dA.ttfbMs - dB.ttfbMs);
+      const a11yDiff = Math.abs(dA.metrics.accessibility - dB.metrics.accessibility);
+      const seoDiff = Math.abs(dA.metrics.seo - dB.metrics.seo);
+      const bpDiff = Math.abs((dA.metrics.bestPractices || 90) - (dB.metrics.bestPractices || 90));
 
       return [
         {
           id: 'performance',
-          category: 'speed' as MetricCategory,
-          label: isPlain ? 'Core Web Vitals: Page Speed' : 'Core Web Vitals: Performance (0–100)',
+          category: 'speed',
+          label: isPlain ? 'Visitor Speed Rating' : 'Lighthouse Performance Score',
           icon: Gauge,
           valA: dA.metrics.performance,
           valB: dB.metrics.performance,
           displayA: `${dA.metrics.performance} / 100`,
           displayB: `${dB.metrics.performance} / 100`,
           winner: getWinner(dA.metrics.performance, dB.metrics.performance),
+          deltaLabel: perfDiff > 0 ? `+${perfDiff} pts` : 'Tied',
           maxVal: 100,
           higherIsBetter: true,
           plainVerdict: dA.metrics.performance > dB.metrics.performance
-            ? `${dA.hostname} renders faster on mobile & desktop`
-            : `${dB.hostname} provides a faster browser experience`,
+            ? `${dA.hostname} delivers faster initial load and responsiveness`
+            : `${dB.hostname} scores higher on Core Web Vitals`,
         },
         {
           id: 'ttfb',
-          category: 'speed' as MetricCategory,
-          label: isPlain ? 'Server Response Latency' : 'Edge Latency (TTFB in ms)',
+          category: 'speed',
+          label: isPlain ? 'Server Response Time' : 'Time to First Byte (TTFB)',
           icon: Clock,
           valA: dA.ttfbMs,
           valB: dB.ttfbMs,
           displayA: `${dA.ttfbMs} ms`,
           displayB: `${dB.ttfbMs} ms`,
           winner: getWinner(dA.ttfbMs, dB.ttfbMs, false),
-          maxVal: Math.max(dA.ttfbMs, dB.ttfbMs, 350),
+          deltaLabel: ttfbDiff > 0 ? `-${ttfbDiff}ms faster` : 'Tied',
+          maxVal: Math.max(dA.ttfbMs, dB.ttfbMs, 300),
           higherIsBetter: false,
           plainVerdict: dA.ttfbMs < dB.ttfbMs
-            ? `${dA.hostname} responds ${Math.abs(dB.ttfbMs - dA.ttfbMs)}ms faster`
-            : `${dB.hostname} responds ${Math.abs(dA.ttfbMs - dB.ttfbMs)}ms faster`,
+            ? `${dA.hostname} edge server responds ${ttfbDiff}ms faster`
+            : `${dB.hostname} delivers faster server latency`,
         },
         {
           id: 'accessibility',
-          category: 'architecture' as MetricCategory,
-          label: isPlain ? 'Accessibility Standards' : 'Accessibility & Semantics (0–100)',
+          category: 'architecture',
+          label: isPlain ? 'Mobile & Screen Reader Readiness' : 'Accessibility Score (WCAG)',
           icon: ShieldCheck,
           valA: dA.metrics.accessibility,
           valB: dB.metrics.accessibility,
           displayA: `${dA.metrics.accessibility} / 100`,
           displayB: `${dB.metrics.accessibility} / 100`,
           winner: getWinner(dA.metrics.accessibility, dB.metrics.accessibility),
+          deltaLabel: a11yDiff > 0 ? `+${a11yDiff} pts` : 'Tied',
           maxVal: 100,
           higherIsBetter: true,
           plainVerdict: dA.metrics.accessibility > dB.metrics.accessibility
-            ? `${dA.hostname} has higher contrast and aria hierarchy`
-            : `${dB.hostname} offers superior accessibility compliance`,
+            ? `${dA.hostname} has superior semantic tag and contrast hygiene`
+            : `${dB.hostname} demonstrates stronger accessibility structure`,
         },
         {
           id: 'seo',
-          category: 'architecture' as MetricCategory,
-          label: isPlain ? 'Search Engine Readiness' : 'SEO Technical Indexing (0–100)',
-          icon: Sparkles,
+          category: 'architecture',
+          label: isPlain ? 'Social & Search Shareability' : 'Search Engine Optimization (SEO)',
+          icon: Globe,
           valA: dA.metrics.seo,
           valB: dB.metrics.seo,
           displayA: `${dA.metrics.seo} / 100`,
           displayB: `${dB.metrics.seo} / 100`,
           winner: getWinner(dA.metrics.seo, dB.metrics.seo),
+          deltaLabel: seoDiff > 0 ? `+${seoDiff} pts` : 'Tied',
           maxVal: 100,
           higherIsBetter: true,
           plainVerdict: dA.metrics.seo > dB.metrics.seo
-            ? `${dA.hostname} has more complete OpenGraph and meta tags`
-            : `${dB.hostname} is more thoroughly search-optimized`,
+            ? `${dA.hostname} has more complete social preview metadata`
+            : `${dB.hostname} is better configured for search crawlers`,
         },
         {
-          id: 'payload',
-          category: 'architecture' as MetricCategory,
-          label: isPlain ? 'Initial HTML Page Size' : 'Document Payload Weight (KB)',
-          icon: Layers,
-          valA: dA.metrics.htmlSizeBytes || 16000,
-          valB: dB.metrics.htmlSizeBytes || 16000,
-          displayA: `${((dA.metrics.htmlSizeBytes || 16000) / 1024).toFixed(1)} KB`,
-          displayB: `${((dB.metrics.htmlSizeBytes || 16000) / 1024).toFixed(1)} KB`,
-          winner: getWinner(dA.metrics.htmlSizeBytes || 16000, dB.metrics.htmlSizeBytes || 16000, false),
-          maxVal: Math.max(dA.metrics.htmlSizeBytes || 16000, dB.metrics.htmlSizeBytes || 16000, 45000),
-          higherIsBetter: false,
-          plainVerdict: (dA.metrics.htmlSizeBytes || 16000) < (dB.metrics.htmlSizeBytes || 16000)
-            ? `${dA.hostname} transmits a leaner initial HTML payload`
-            : `${dB.hostname} has a lighter initial HTML bundle`,
+          id: 'bestPractices',
+          category: 'architecture',
+          label: isPlain ? 'Security & Modern Web Hygiene' : 'Best Practices Audit',
+          icon: Lock,
+          valA: dA.metrics.bestPractices || 90,
+          valB: dB.metrics.bestPractices || 90,
+          displayA: `${dA.metrics.bestPractices || 90} / 100`,
+          displayB: `${dB.metrics.bestPractices || 90} / 100`,
+          winner: getWinner(dA.metrics.bestPractices || 90, dB.metrics.bestPractices || 90),
+          deltaLabel: bpDiff > 0 ? `+${bpDiff} pts` : 'Tied',
+          maxVal: 100,
+          higherIsBetter: true,
+          plainVerdict: (dA.metrics.bestPractices || 90) > (dB.metrics.bestPractices || 90)
+            ? `${dA.hostname} enforces stricter security headers and HTTPS`
+            : `${dB.hostname} complies better with modern web standards`,
         },
       ];
     }
 
-    // Cross-Audit (Live vs Repo)
+    // Cross Matchup (Live URL vs Repo)
     const liveTarget = targetA.type === 'live' ? targetA.data : (targetB.data as LiveAuditData);
     const repoTarget = targetA.type === 'repo' ? targetA.data : (targetB.data as RepoTelemetrySummary);
     const isTargetALive = targetA.type === 'live';
 
     return [
       {
-        id: 'runtime-speed',
-        category: 'speed' as MetricCategory,
-        label: isPlain ? 'Live Page Speed vs Code Velocity' : 'Runtime Performance vs Commit Velocity',
+        id: 'vitality-score',
+        category: 'speed',
+        label: isPlain ? 'Deployment Speed vs Repo Velocity' : 'PageSpeed Performance vs Velocity Score',
         icon: Zap,
         valA: isTargetALive ? liveTarget.metrics.performance : repoTarget.velocityScore,
         valB: !isTargetALive ? liveTarget.metrics.performance : repoTarget.velocityScore,
-        displayA: isTargetALive ? `${liveTarget.metrics.performance} / 100 Speed` : `${repoTarget.velocityScore} / 100 Velocity`,
-        displayB: !isTargetALive ? `${liveTarget.metrics.performance} / 100 Speed` : `${repoTarget.velocityScore} / 100 Velocity`,
-        winner: isTargetALive
-          ? getWinner(liveTarget.metrics.performance, repoTarget.velocityScore)
-          : getWinner(repoTarget.velocityScore, liveTarget.metrics.performance),
+        displayA: isTargetALive ? `${liveTarget.metrics.performance}/100 Vitals` : `${repoTarget.velocityScore}/100 Velocity`,
+        displayB: !isTargetALive ? `${liveTarget.metrics.performance}/100 Vitals` : `${repoTarget.velocityScore}/100 Velocity`,
+        winner: 'tie',
+        deltaLabel: 'Cross Metric',
         maxVal: 100,
         higherIsBetter: true,
         plainVerdict: 'Live deployment response correlates directly with repository engineering throughput.',
       },
       {
         id: 'latency-cadence',
-        category: 'speed' as MetricCategory,
+        category: 'speed',
         label: isPlain ? 'Server Response vs Shipping Sprints' : 'Edge TTFB vs Weekly Commit Cadence',
         icon: Clock,
         valA: isTargetALive ? Math.max(10, 100 - liveTarget.ttfbMs / 10) : repoTarget.cadence * 5,
         valB: !isTargetALive ? Math.max(10, 100 - liveTarget.ttfbMs / 10) : repoTarget.cadence * 5,
         displayA: isTargetALive ? `${liveTarget.ttfbMs} ms TTFB` : `${repoTarget.cadence.toFixed(1)} commits/wk`,
         displayB: !isTargetALive ? `${liveTarget.ttfbMs} ms TTFB` : `${repoTarget.cadence.toFixed(1)} commits/wk`,
-        winner: 'tie' as const,
+        winner: 'tie',
+        deltaLabel: 'Cross Metric',
         maxVal: 100,
         higherIsBetter: true,
         plainVerdict: `Production edge server clocks at ${liveTarget.ttfbMs}ms with ~${repoTarget.cadence.toFixed(1)} commits landing weekly.`,
       },
       {
         id: 'standards-governance',
-        category: 'architecture' as MetricCategory,
+        category: 'architecture',
         label: isPlain ? 'Web Standards vs Repo Governance' : 'Accessibility Score vs Health Grade',
         icon: ShieldCheck,
         valA: isTargetALive ? liveTarget.metrics.accessibility : repoTarget.healthScore,
         valB: !isTargetALive ? liveTarget.metrics.accessibility : repoTarget.healthScore,
         displayA: isTargetALive ? `${liveTarget.metrics.accessibility} / 100 A11y` : `Grade ${repoTarget.healthGrade} (${repoTarget.healthScore}%)`,
         displayB: !isTargetALive ? `${liveTarget.metrics.accessibility} / 100 A11y` : `Grade ${repoTarget.healthGrade} (${repoTarget.healthScore}%)`,
-        winner: 'tie' as const,
+        winner: 'tie',
+        deltaLabel: 'Cross Metric',
         maxVal: 100,
         higherIsBetter: true,
         plainVerdict: `Accessibility scored at ${liveTarget.metrics.accessibility}/100 while repository governance rates at Grade ${repoTarget.healthGrade}.`,
-      },
-      {
-        id: 'scale-adoption',
-        category: 'architecture' as MetricCategory,
-        label: isPlain ? 'Edge Architecture vs Open-Source Stars' : 'Edge Infrastructure vs Repository Scale',
-        icon: Star,
-        valA: isTargetALive ? 88 : repoTarget.stars,
-        valB: !isTargetALive ? 88 : repoTarget.stars,
-        displayA: isTargetALive ? `${liveTarget.serverHeader || 'Edge'} (${liveTarget.edgeCacheStatus || 'HIT'})` : `${formatNumber(repoTarget.stars)} stars`,
-        displayB: !isTargetALive ? `${liveTarget.serverHeader || 'Edge'} (${liveTarget.edgeCacheStatus || 'HIT'})` : `${formatNumber(repoTarget.stars)} stars`,
-        winner: 'tie' as const,
-        maxVal: Math.max(repoTarget.stars, 100),
-        higherIsBetter: true,
-        plainVerdict: `Powered by ${liveTarget.serverHeader || 'Edge Network'} with a community of ${formatNumber(repoTarget.stars)} developers.`,
       },
     ];
   }, [targetA, targetB, isPlain]);
@@ -601,14 +597,15 @@ export default function RepoComparisonModal() {
     return metricItems.filter((m) => m.category === selectedCategory);
   }, [metricItems, selectedCategory]);
 
-  // Overall winner computation
-  const overallWinner = useMemo<'a' | 'b' | 'tie'>(() => {
-    if (!metricItems || metricItems.length === 0) return 'tie';
-    const winsA = metricItems.filter((m) => m.winner === 'a').length;
-    const winsB = metricItems.filter((m) => m.winner === 'b').length;
-    if (winsA > winsB) return 'a';
-    if (winsB > winsA) return 'b';
-    return 'tie';
+  // Overall scoreboard calculation
+  const { winsA, winsB, overallWinner } = useMemo(() => {
+    if (!metricItems || metricItems.length === 0) {
+      return { winsA: 0, winsB: 0, overallWinner: 'tie' as const };
+    }
+    const aCount = metricItems.filter((m) => m.winner === 'a').length;
+    const bCount = metricItems.filter((m) => m.winner === 'b').length;
+    const winner: 'a' | 'b' | 'tie' = aCount > bCount ? 'a' : bCount > aCount ? 'b' : 'tie';
+    return { winsA: aCount, winsB: bCount, overallWinner: winner };
   }, [metricItems]);
 
   // Synthesis summary verdict
@@ -619,15 +616,15 @@ export default function RepoComparisonModal() {
 
     if (overallWinner === 'a') {
       return isPlain
-        ? `${nameA} outperforms ${nameB} across key performance, velocity, and maintenance criteria.`
-        : `${nameA} demonstrates superior engineering momentum, commanding a decisive lead across critical telemetry benchmarks.`;
+        ? `${nameA} leads ${nameB} across ${winsA} benchmark categories.`
+        : `${nameA} commands a decisive lead over ${nameB} with ${winsA} category victories across velocity, latency, and code health.`;
     } else if (overallWinner === 'b') {
       return isPlain
-        ? `${nameB} exhibits stronger velocity and operational responsiveness than ${nameA}.`
-        : `${nameB} commands stronger throughput, developer adoption, and infrastructure efficiency over ${nameA}.`;
+        ? `${nameB} leads ${nameA} across ${winsB} benchmark categories.`
+        : `${nameB} commands a decisive lead over ${nameA} with ${winsB} category victories across velocity, latency, and code health.`;
     }
     return `Both contenders display balanced metrics with complementary strengths across speed, reliability, and code hygiene.`;
-  }, [targetA, targetB, overallWinner, isPlain]);
+  }, [targetA, targetB, overallWinner, winsA, winsB, isPlain]);
 
   // Auto-detect linked GitHub repo for live URL cross-audit
   const linkedRepoOffer = useMemo(() => {
@@ -666,20 +663,17 @@ export default function RepoComparisonModal() {
           aria-hidden="true"
         />
 
-        {/* Modal Arena Window */}
+        {/* Modal Arena Window: Wide Layered Obsidian-Burgundy Stage */}
         <motion.div
           initial={{ opacity: 0, scale: 0.96, y: 16 }}
           animate={{ opacity: 1, scale: 1, y: 0 }}
           exit={{ opacity: 0, scale: 0.96, y: 16 }}
           transition={{ type: 'spring', damping: 28, stiffness: 320 }}
-          className="relative w-full max-w-5xl rounded-2xl border border-[#A5A79B]/20 bg-[#180d0d] shadow-2xl p-5 sm:p-8 overflow-hidden z-10 flex flex-col gap-6 max-h-[88vh] overflow-y-auto"
-          style={{
-            boxShadow: '0 30px 80px rgba(0, 0, 0, 0.85), inset 0 1px 0 rgba(232, 210, 181, 0.08)',
-          }}
+          className="relative w-full max-w-5xl rounded-3xl border border-[#A5A79B]/20 bg-[#120909]/95 backdrop-blur-2xl shadow-[0_24px_80px_rgba(0,0,0,0.85)] p-5 sm:p-8 overflow-hidden z-10 flex flex-col gap-6 max-h-[88vh] overflow-y-auto"
         >
-          {/* Subtle Ambient Glow */}
+          {/* Subtle Ambient Radial Backlight */}
           <div
-            className="bg-[#590907]/25 blur-3xl rounded-full absolute -top-12 -right-12 w-64 h-64 pointer-events-none"
+            className="bg-[#590907]/25 blur-3xl rounded-full absolute -top-12 -right-12 w-72 h-72 pointer-events-none"
             aria-hidden="true"
           />
 
@@ -687,7 +681,7 @@ export default function RepoComparisonModal() {
           <div className="flex items-center justify-between pb-4 border-b border-[#A5A79B]/15 relative z-10 flex-wrap gap-3">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 rounded-xl bg-[#590907]/30 border border-[#590907] flex items-center justify-center text-[#E8D2B5] shadow-md">
-                <GitCompare size={20} />
+                <ArrowLeftRight size={18} />
               </div>
               <div>
                 <span className="font-mono text-[11px] font-semibold tracking-[0.18em] uppercase text-[#A5A79B]">
@@ -701,7 +695,7 @@ export default function RepoComparisonModal() {
 
             {/* Controls: Audience Mode & Close */}
             <div className="flex items-center gap-2.5">
-              <div className="flex items-center p-1 rounded-xl bg-[#120909] border border-[#A5A79B]/20">
+              <div className="flex items-center p-1 rounded-xl bg-[#180d0d] border border-[#A5A79B]/20">
                 {(['technical', 'plain'] as const).map((mode) => {
                   const isActive = (isMounted ? audienceMode : 'technical') === mode;
                   return (
@@ -724,7 +718,7 @@ export default function RepoComparisonModal() {
 
               <button
                 onClick={() => setComparisonModalOpen(false)}
-                className="w-8 h-8 rounded-lg flex items-center justify-center text-[#A5A79B] hover:text-[#E8D2B5] hover:bg-[#120909] border border-[#A5A79B]/15 transition-colors cursor-pointer"
+                className="w-8 h-8 rounded-lg flex items-center justify-center text-[#A5A79B] hover:text-[#E8D2B5] hover:bg-[#180d0d] border border-[#A5A79B]/15 transition-colors cursor-pointer"
                 aria-label="Close modal"
               >
                 <X size={18} />
@@ -732,31 +726,45 @@ export default function RepoComparisonModal() {
             </div>
           </div>
 
-          {/* Dual Input Hub with Interactive Pulse VS Swapper */}
+          {/* Dual Input Hub with Explicit Clear Buttons (Zero Auto-Refill on Erase) */}
           <div className="space-y-3 relative z-10">
             <div className="grid grid-cols-1 md:grid-cols-12 gap-3 items-center">
-              {/* Contender A Input */}
+              {/* Contender A Input with Clear Button */}
               <div className="md:col-span-5 relative">
                 <Search size={14} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[#A5A79B]" />
                 <input
+                  ref={inputARef}
                   type="text"
                   value={repoAInput}
                   onChange={(e) => setRepoAInput(e.target.value)}
                   onKeyDown={(e) => e.key === 'Enter' && handleCompare(repoAInput, repoBInput)}
                   placeholder="Target A: GitHub repo or live URL..."
-                  className="w-full pl-9 pr-3 py-2.5 rounded-xl bg-[#120909] border border-[#A5A79B]/20 text-xs font-mono text-[#E8D2B5] placeholder-[#A5A79B]/40 focus:outline-none focus:border-[#590907]"
+                  className="w-full pl-9 pr-8 py-2.5 rounded-xl bg-[#180d0d] border border-[#A5A79B]/20 text-xs font-mono text-[#E8D2B5] placeholder-[#A5A79B]/40 focus:outline-none focus:border-[#590907] transition-colors"
                 />
+                {repoAInput && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setRepoAInput('');
+                      inputARef.current?.focus();
+                    }}
+                    className="absolute right-2.5 top-1/2 -translate-y-1/2 p-1 text-[#A5A79B] hover:text-[#E8D2B5] transition-colors rounded-md cursor-pointer"
+                    title="Clear input"
+                  >
+                    <X size={13} />
+                  </button>
+                )}
               </div>
 
-              {/* Interactive Pulse VS Contender Swap Button */}
+              {/* Interactive Tactile Center VS Reactor & Swap Trigger */}
               <div className="md:col-span-2 flex items-center justify-center">
                 <motion.button
                   type="button"
                   whileHover={{ scale: 1.12 }}
-                  whileTap={{ scale: 0.94 }}
+                  whileTap={{ scale: 0.92 }}
                   onClick={handleSwapContenders}
                   className="relative w-11 h-11 rounded-full bg-[#180d0d] border border-[#590907] hover:border-[#E8D2B5] text-[#E8D2B5] flex items-center justify-center cursor-pointer shadow-lg shadow-black/60 transition-colors z-20 ring-2 ring-[#590907]/60 group"
-                  title="Swap contenders (180°)"
+                  title="Swap contenders (180° spring physics)"
                   aria-label="Swap contenders"
                 >
                   <span className="absolute -inset-1 rounded-full bg-[#590907]/30 blur-sm pointer-events-none group-hover:bg-[#590907]/60 transition-all" />
@@ -770,36 +778,51 @@ export default function RepoComparisonModal() {
                 </motion.button>
               </div>
 
-              {/* Contender B Input */}
+              {/* Contender B Input with Clear Button */}
               <div className="md:col-span-5 relative">
                 <Search size={14} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[#A5A79B]" />
                 <input
+                  ref={inputBRef}
                   type="text"
                   value={repoBInput}
                   onChange={(e) => setRepoBInput(e.target.value)}
                   onKeyDown={(e) => e.key === 'Enter' && handleCompare(repoAInput, repoBInput)}
                   placeholder="Target B: GitHub repo or live URL..."
-                  className="w-full pl-9 pr-3 py-2.5 rounded-xl bg-[#120909] border border-[#A5A79B]/20 text-xs font-mono text-[#E8D2B5] placeholder-[#A5A79B]/40 focus:outline-none focus:border-[#590907]"
+                  className="w-full pl-9 pr-8 py-2.5 rounded-xl bg-[#180d0d] border border-[#A5A79B]/20 text-xs font-mono text-[#E8D2B5] placeholder-[#A5A79B]/40 focus:outline-none focus:border-[#590907] transition-colors"
                 />
+                {repoBInput && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setRepoBInput('');
+                      inputBRef.current?.focus();
+                    }}
+                    className="absolute right-2.5 top-1/2 -translate-y-1/2 p-1 text-[#A5A79B] hover:text-[#E8D2B5] transition-colors rounded-md cursor-pointer"
+                    title="Clear input"
+                  >
+                    <X size={13} />
+                  </button>
+                )}
               </div>
             </div>
 
-            {/* Smart Presets & Linked Cross-Audit Chip */}
+            {/* Quick Matchups Preset Pills */}
             <div className="flex items-center justify-between flex-wrap gap-2 pt-1">
               <div className="flex items-center gap-1.5 flex-wrap">
-                <span className="text-[11px] font-mono font-semibold text-[#A5A79B]/70 mr-1">Arena Presets:</span>
+                <span className="text-[11px] font-mono font-semibold text-[#A5A79B]/70 mr-1">Quick Matchups:</span>
                 {PRESET_MATCHUPS.map((pair) => (
                   <button
                     key={pair.label}
+                    type="button"
                     onClick={() => {
                       setRepoAInput(pair.a);
                       setRepoBInput(pair.b);
                       handleCompare(pair.a, pair.b);
                     }}
-                    className="px-2.5 py-1 rounded-lg bg-[#120909] hover:bg-[#180d0d] text-[#A5A79B] hover:text-[#E8D2B5] border border-[#A5A79B]/15 text-[11px] font-mono transition-all cursor-pointer flex items-center gap-1.5"
+                    className="px-2.5 py-1 rounded-lg bg-[#180d0d] hover:bg-[#201111] text-[#A5A79B] hover:text-[#E8D2B5] border border-[#A5A79B]/15 hover:border-[#590907] text-[11px] font-mono transition-all cursor-pointer flex items-center gap-1.5 shadow-sm"
                   >
                     <span className="font-medium">{pair.label}</span>
-                    <span className="text-[9px] px-1 rounded bg-[#590907]/40 text-[#E8D2B5] border border-[#590907]/60">
+                    <span className="text-[9px] px-1 rounded bg-[#590907]/40 text-[#E8D2B5] border border-[#590907]/60 font-semibold">
                       {pair.typeBadge}
                     </span>
                   </button>
@@ -807,11 +830,12 @@ export default function RepoComparisonModal() {
               </div>
 
               <button
+                type="button"
                 onClick={() => handleCompare(repoAInput, repoBInput)}
                 disabled={loading || !repoAInput.trim() || !repoBInput.trim()}
                 className="px-4 py-2 rounded-xl text-xs font-mono font-bold bg-[#590907] text-[#E8D2B5] hover:bg-[#77110f] transition-all disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer shadow-md inline-flex items-center gap-2"
               >
-                <GitCompare size={14} />
+                <ArrowLeftRight size={13} />
                 <span>Execute Matchup</span>
               </button>
             </div>
@@ -846,11 +870,11 @@ export default function RepoComparisonModal() {
               <div className="flex items-center justify-between text-xs font-mono text-[#A5A79B]">
                 <div className="flex items-center gap-2">
                   <span className="w-2 h-2 rounded-full bg-[#E8D2B5] animate-pulse" />
-                  <span className="font-semibold">Concurrently inspecting targets...</span>
+                  <span className="font-semibold">Concurrently inspecting contenders...</span>
                 </div>
                 <span className="text-[#E8D2B5] font-bold">Syncing Telemetry Engine</span>
               </div>
-              <div className="h-2.5 w-full bg-[#120909] rounded-full overflow-hidden border border-[#A5A79B]/15">
+              <div className="h-2.5 w-full bg-[#180d0d] rounded-full overflow-hidden border border-[#A5A79B]/15">
                 <motion.div
                   className="h-full bg-gradient-to-r from-[#590907] via-[#E8D2B5] to-[#590907] rounded-full"
                   animate={{
@@ -904,7 +928,7 @@ export default function RepoComparisonModal() {
             </div>
           )}
 
-          {/* Main Comparison Matrix Display with Staggered Framer Motion Reveal */}
+          {/* Main Comparison Matrix Display with Scoreboard */}
           {!loading && targetA && targetB && (
             <motion.div
               initial="hidden"
@@ -921,28 +945,47 @@ export default function RepoComparisonModal() {
               }}
               className="space-y-6 relative z-10"
             >
-              {/* Comparative Executive Banner */}
-              <motion.div
-                variants={{
-                  hidden: { opacity: 0, y: 12 },
-                  visible: { opacity: 1, y: 0 },
-                }}
-                className="p-4 sm:p-5 rounded-2xl bg-[#120909] border border-[#590907]/50 flex items-start gap-3.5 shadow-lg"
-              >
-                <Sparkles size={18} className="text-[#E8D2B5] shrink-0 mt-0.5" />
-                <div className="space-y-1">
-                  <span className="font-mono text-[11px] uppercase tracking-wider text-[#E8D2B5] font-bold block">
-                    SYNTHESIS VERDICT
-                  </span>
-                  <p className="font-sans text-sm sm:text-[15px] font-medium text-[#E8D2B5] leading-relaxed">
-                    {summaryVerdict}
-                  </p>
+              {/* Overall Matchup Scoreboard */}
+              <div className="p-4 rounded-2xl bg-[#180d0d] border border-[#A5A79B]/20 shadow-xl flex items-center justify-between gap-4 flex-wrap">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-xl bg-[#590907]/30 border border-[#590907] flex items-center justify-center text-[#E8D2B5]">
+                    <Trophy size={18} />
+                  </div>
+                  <div>
+                    <span className="text-[10px] font-mono uppercase tracking-widest text-[#A5A79B] font-bold block">
+                      OVERALL MATCHUP SCOREBOARD
+                    </span>
+                    <h4 className="text-sm sm:text-base font-bold text-[#E8D2B5] font-sans">
+                      {summaryVerdict}
+                    </h4>
+                  </div>
                 </div>
-              </motion.div>
 
-              {/* Side-by-Side Dual Contender Cards with Framer Motion Layout Transitions */}
+                <div className="flex items-center gap-4 bg-[#120909] px-4 py-2 rounded-xl border border-[#A5A79B]/15">
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-xs font-mono text-[#A5A79B] font-semibold truncate max-w-[120px]">
+                      {targetA.type === 'repo' ? targetA.data.repo.name : targetA.data.hostname}
+                    </span>
+                    <span className={`text-xl font-mono font-extrabold ${overallWinner === 'a' ? 'text-[#E8D2B5]' : 'text-[#A5A79B]'}`}>
+                      {winsA}
+                    </span>
+                  </div>
+
+                  <span className="text-xs font-mono font-bold text-[#590907] px-1">—</span>
+
+                  <div className="flex items-center gap-1.5">
+                    <span className={`text-xl font-mono font-extrabold ${overallWinner === 'b' ? 'text-[#E8D2B5]' : 'text-[#A5A79B]'}`}>
+                      {winsB}
+                    </span>
+                    <span className="text-xs font-mono text-[#A5A79B] font-semibold truncate max-w-[120px]">
+                      {targetB.type === 'repo' ? targetB.data.repo.name : targetB.data.hostname}
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Side-by-Side Dual Contender Twin Cards with Radial Spotlights */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {/* Contender A Card */}
                 <ContenderCard
                   target={targetA}
                   isWinner={overallWinner === 'a'}
@@ -950,10 +993,9 @@ export default function RepoComparisonModal() {
                     setCurrentRepo(repoName);
                     setComparisonModalOpen(false);
                   }}
-                  roleLabel="PRIMARY BENCHMARK"
+                  roleLabel="CONTENDER A"
                 />
 
-                {/* Contender B Card */}
                 <ContenderCard
                   target={targetB}
                   isWinner={overallWinner === 'b'}
@@ -961,18 +1003,18 @@ export default function RepoComparisonModal() {
                     setCurrentRepo(repoName);
                     setComparisonModalOpen(false);
                   }}
-                  roleLabel="CHALLENGER TARGET"
+                  roleLabel="CONTENDER B"
                 />
               </div>
 
-              {/* Category Filter Tabs with Shared Layout Sliding Pill */}
+              {/* Category Filter Tabs with Shared Layout Pill */}
               <div className="flex items-center justify-between flex-wrap gap-3 pt-2">
-                <div className="flex items-center p-1 rounded-xl bg-[#120909] border border-[#A5A79B]/20">
+                <div className="flex items-center p-1 rounded-xl bg-[#180d0d] border border-[#A5A79B]/20">
                   {(
                     [
                       { id: 'all', label: 'All Dimensions' },
-                      { id: 'speed', label: 'Speed & Velocity' },
-                      { id: 'architecture', label: 'Architecture & Hygiene' },
+                      { id: 'speed', label: 'Speed & Latency' },
+                      { id: 'architecture', label: 'Architecture & Standards' },
                     ] as const
                   ).map((tab) => {
                     const isActive = selectedCategory === tab.id;
@@ -1004,59 +1046,16 @@ export default function RepoComparisonModal() {
               </div>
 
               {/* Spring-Loaded Center-Outward Tug-of-War Telemetry Matrix */}
-              <div className="space-y-4 rounded-2xl border border-[#A5A79B]/15 bg-[#120909] p-4 sm:p-6 shadow-xl">
+              <div className="space-y-4 rounded-2xl border border-[#A5A79B]/15 bg-[#180d0d] p-4 sm:p-6 shadow-xl">
                 <div className="flex items-center justify-between border-b border-[#A5A79B]/15 pb-2.5 text-xs font-mono text-[#A5A79B]">
                   <span className="font-bold uppercase tracking-wider">TUG-OF-WAR BENCHMARK MATRIX</span>
-                  <span className="text-[11px] text-[#A5A79B]/60 font-medium">CENTER-OUT EXPANSION</span>
+                  <span className="text-[11px] text-[#A5A79B]/60 font-medium">EXPANDING CENTER-OUTWARD</span>
                 </div>
 
                 <div className="space-y-4">
                   {filteredMetrics.map((item) => (
                     <TugOfWarRow key={item.id} item={item} />
                   ))}
-                </div>
-              </div>
-
-              {/* Winner Badges Summary Footer */}
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-1">
-                <div className="p-4 rounded-xl bg-[#120909] border border-[#A5A79B]/15 flex items-center gap-3.5">
-                  <div className="w-9 h-9 rounded-lg bg-[#590907]/40 border border-[#590907] flex items-center justify-center shrink-0 text-[#E8D2B5]">
-                    <Zap size={16} />
-                  </div>
-                  <div className="min-w-0 flex-1">
-                    <span className="text-[10px] font-mono font-semibold uppercase text-[#A5A79B] block">OVERALL LEADER</span>
-                    <span className="text-xs sm:text-sm font-extrabold font-mono text-[#E8D2B5] truncate block">
-                      {overallWinner === 'a'
-                        ? targetA.type === 'repo' ? targetA.data.repo.name : targetA.data.hostname
-                        : overallWinner === 'b'
-                        ? targetB.type === 'repo' ? targetB.data.repo.name : targetB.data.hostname
-                        : 'Balanced Matchup'}
-                    </span>
-                  </div>
-                </div>
-
-                <div className="p-4 rounded-xl bg-[#120909] border border-[#A5A79B]/15 flex items-center gap-3.5">
-                  <div className="w-9 h-9 rounded-lg bg-[#590907]/40 border border-[#590907] flex items-center justify-center shrink-0 text-[#E8D2B5]">
-                    <ShieldCheck size={16} />
-                  </div>
-                  <div className="min-w-0 flex-1">
-                    <span className="text-[10px] font-mono font-semibold uppercase text-[#A5A79B] block">MATCHUP ARCHITECTURE</span>
-                    <span className="text-xs sm:text-sm font-extrabold font-mono text-[#E8D2B5] truncate block capitalize">
-                      {matchupType.replace(/-/g, ' ')}
-                    </span>
-                  </div>
-                </div>
-
-                <div className="p-4 rounded-xl bg-[#120909] border border-[#A5A79B]/15 flex items-center gap-3.5">
-                  <div className="w-9 h-9 rounded-lg bg-[#590907]/40 border border-[#590907] flex items-center justify-center shrink-0 text-[#E8D2B5]">
-                    <Sparkles size={16} />
-                  </div>
-                  <div className="min-w-0 flex-1">
-                    <span className="text-[10px] font-mono font-semibold uppercase text-[#A5A79B] block">AUDIENCE AUDIT</span>
-                    <span className="text-xs sm:text-sm font-extrabold font-mono text-[#E8D2B5] truncate block capitalize">
-                      {isPlain ? 'Plain English Dilemma' : 'Technical Rest Telemetry'}
-                    </span>
-                  </div>
                 </div>
               </div>
             </motion.div>
@@ -1070,7 +1069,7 @@ export default function RepoComparisonModal() {
 // ─── SUB-COMPONENTS ──────────────────────────────────────────────────────────
 
 /**
- * Contender Display Card for Repo or Live URL
+ * Contender Display Card for Repo or Live URL with Radial Spotlight
  */
 function ContenderCard({
   target,
@@ -1088,25 +1087,33 @@ function ContenderCard({
     return (
       <motion.div
         layout
-        className={`p-4 sm:p-5 rounded-2xl bg-[#120909] border flex flex-col justify-between gap-3.5 relative overflow-hidden transition-all duration-300 ${
+        className={`p-5 rounded-2xl bg-[#180d0d] border flex flex-col justify-between gap-4 relative overflow-hidden transition-all duration-300 ${
           isWinner
-            ? 'border-[#590907] ring-1 ring-[#590907] shadow-[0_0_25px_rgba(89,9,7,0.35)]'
+            ? 'border-[#590907] ring-1 ring-[#590907] shadow-[0_0_30px_rgba(89,9,7,0.35)]'
             : 'border-[#A5A79B]/15'
         }`}
       >
+        {/* Radial Spotlight Behind Leader */}
+        {isWinner && (
+          <div
+            className="bg-[#590907]/20 blur-2xl rounded-full absolute -top-10 -right-10 w-44 h-44 pointer-events-none"
+            aria-hidden="true"
+          />
+        )}
+
         {isWinner && (
           <motion.div
             initial={{ scale: 0.8, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
-            className="absolute top-3 right-3 inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-mono font-extrabold bg-[#590907] text-[#E8D2B5] border border-[#E8D2B5]/30 shadow-md"
+            className="absolute top-3.5 right-3.5 inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-mono font-extrabold bg-[#590907] text-[#E8D2B5] border border-[#E8D2B5]/30 shadow-md z-10"
           >
             <Trophy size={11} className="text-[#E8D2B5]" />
-            <span>LEADER</span>
+            <span>CATEGORY LEADER</span>
           </motion.div>
         )}
 
-        <div className="flex items-start gap-3.5">
-          <div className="relative w-12 h-12 rounded-xl overflow-hidden shrink-0 border border-[#A5A79B]/20 bg-[#180d0d]">
+        <div className="flex items-start gap-3.5 relative z-10">
+          <div className="relative w-12 h-12 rounded-xl overflow-hidden shrink-0 border border-[#A5A79B]/20 bg-[#120909]">
             <Image
               src={repo.owner.avatar_url}
               alt={repo.owner.login}
@@ -1127,7 +1134,7 @@ function ContenderCard({
           </div>
         </div>
 
-        <div className="flex items-center justify-between pt-2 border-t border-[#A5A79B]/15 text-xs font-mono">
+        <div className="flex items-center justify-between pt-2 border-t border-[#A5A79B]/15 text-xs font-mono relative z-10">
           <span className="text-[#A5A79B]">
             Language: <strong className="text-[#E8D2B5] font-bold">{language}</strong>
           </span>
@@ -1148,30 +1155,38 @@ function ContenderCard({
   return (
     <motion.div
       layout
-      className={`p-4 sm:p-5 rounded-2xl bg-[#120909] border flex flex-col justify-between gap-3.5 relative overflow-hidden transition-all duration-300 ${
+      className={`p-5 rounded-2xl bg-[#180d0d] border flex flex-col justify-between gap-4 relative overflow-hidden transition-all duration-300 ${
         isWinner
-          ? 'border-[#590907] ring-1 ring-[#590907] shadow-[0_0_25px_rgba(89,9,7,0.35)]'
+          ? 'border-[#590907] ring-1 ring-[#590907] shadow-[0_0_30px_rgba(89,9,7,0.35)]'
           : 'border-[#A5A79B]/15'
       }`}
     >
+      {/* Radial Spotlight Behind Leader */}
+      {isWinner && (
+        <div
+          className="bg-[#590907]/20 blur-2xl rounded-full absolute -top-10 -right-10 w-44 h-44 pointer-events-none"
+          aria-hidden="true"
+        />
+      )}
+
       {isWinner && (
         <motion.div
           initial={{ scale: 0.8, opacity: 0 }}
           animate={{ scale: 1, opacity: 1 }}
-          className="absolute top-3 right-3 inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-mono font-extrabold bg-[#590907] text-[#E8D2B5] border border-[#E8D2B5]/30 shadow-md"
+          className="absolute top-3.5 right-3.5 inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-mono font-extrabold bg-[#590907] text-[#E8D2B5] border border-[#E8D2B5]/30 shadow-md z-10"
         >
           <Trophy size={11} className="text-[#E8D2B5]" />
-          <span>LEADER</span>
+          <span>CATEGORY LEADER</span>
         </motion.div>
       )}
 
-      <div className="flex items-start gap-3.5">
+      <div className="flex items-start gap-3.5 relative z-10">
         <div className="w-12 h-12 rounded-xl bg-[#590907]/30 border border-[#590907] flex items-center justify-center shrink-0 text-[#E8D2B5]">
           <Globe size={22} />
         </div>
         <div className="min-w-0 flex-1">
           <span className="text-[10px] font-mono font-semibold uppercase tracking-wider text-[#A5A79B]">
-            {roleLabel} (LIVE)
+            {roleLabel} (LIVE DEPLOYMENT)
           </span>
           <h3 className="text-base sm:text-lg font-serif font-normal text-[#E8D2B5] truncate">
             {data.title || data.hostname}
@@ -1182,7 +1197,7 @@ function ContenderCard({
         </div>
       </div>
 
-      <div className="flex items-center justify-between pt-2 border-t border-[#A5A79B]/15 text-xs font-mono">
+      <div className="flex items-center justify-between pt-2 border-t border-[#A5A79B]/15 text-xs font-mono relative z-10">
         <div className="flex items-center gap-2">
           <span className="text-[#A5A79B]">TTFB: <strong className="text-[#E8D2B5] font-bold">{data.ttfbMs}ms</strong></span>
           {data.isHttps && (
@@ -1206,12 +1221,12 @@ function ContenderCard({
 }
 
 /**
- * Spring-Loaded Center-Outward Tug-of-War Metric Row
+ * Spring-Loaded Center-Outward Tug-of-War Metric Row with Delta Badges
  */
-function TugOfWarRow({ item }: { item: any }) {
+function TugOfWarRow({ item }: { item: MetricItem }) {
   const Icon = item.icon;
-  const pctA = Math.min(100, Math.max(6, (item.valA / (item.maxVal || 1)) * 100));
-  const pctB = Math.min(100, Math.max(6, (item.valB / (item.maxVal || 1)) * 100));
+  const pctA = Math.min(100, Math.max(8, (item.valA / (item.maxVal || 1)) * 100));
+  const pctB = Math.min(100, Math.max(8, (item.valB / (item.maxVal || 1)) * 100));
 
   return (
     <motion.div
@@ -1221,12 +1236,19 @@ function TugOfWarRow({ item }: { item: any }) {
       }}
       className="space-y-2 py-2 border-b border-[#A5A79B]/10 last:border-b-0"
     >
-      {/* Label and Plain Verdict */}
+      {/* Label, Delta Badge, and Plain Verdict */}
       <div className="flex items-center justify-between text-xs font-sans">
-        <span className="text-[#E8D2B5] font-bold flex items-center gap-1.5">
-          <Icon size={14} className="text-[#E8D2B5]" />
-          <span>{item.label}</span>
-        </span>
+        <div className="flex items-center gap-2">
+          <span className="text-[#E8D2B5] font-bold flex items-center gap-1.5">
+            <Icon size={14} className="text-[#E8D2B5]" />
+            <span>{item.label}</span>
+          </span>
+          {item.deltaLabel && item.deltaLabel !== 'Equal parity' && (
+            <span className="px-2 py-0.5 rounded-full text-[10px] font-mono font-bold bg-[#590907]/40 text-[#E8D2B5] border border-[#590907]">
+              {item.deltaLabel}
+            </span>
+          )}
+        </div>
         {item.plainVerdict && (
           <span className="text-xs font-medium text-[#A5A79B] truncate max-w-sm hidden sm:inline">
             {item.plainVerdict}
@@ -1259,7 +1281,7 @@ function TugOfWarRow({ item }: { item: any }) {
         {/* Tug-of-War Spring-Loaded Center-Outward Track */}
         <div className="flex items-center gap-1 w-full">
           {/* Left Bar (Contender A) expands outward to left from center (originX: 1) */}
-          <div className="flex-1 flex justify-end h-2.5 bg-[#180d0d] rounded-l-full overflow-hidden border border-r-0 border-[#A5A79B]/20">
+          <div className="flex-1 flex justify-end h-2.5 bg-[#120909] rounded-l-full overflow-hidden border border-r-0 border-[#A5A79B]/20">
             <motion.div
               initial={{ scaleX: 0 }}
               animate={{ scaleX: 1 }}
@@ -1277,7 +1299,7 @@ function TugOfWarRow({ item }: { item: any }) {
           <div className="w-1.5 h-4 rounded-full bg-[#A5A79B]/40 shrink-0 shadow-sm" />
 
           {/* Right Bar (Contender B) expands outward to right from center (originX: 0) */}
-          <div className="flex-1 flex justify-start h-2.5 bg-[#180d0d] rounded-r-full overflow-hidden border border-l-0 border-[#A5A79B]/20">
+          <div className="flex-1 flex justify-start h-2.5 bg-[#120909] rounded-r-full overflow-hidden border border-l-0 border-[#A5A79B]/20">
             <motion.div
               initial={{ scaleX: 0 }}
               animate={{ scaleX: 1 }}

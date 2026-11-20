@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
-import { Search, GitCompare, Download, ChevronDown, FileText, Printer, Zap, Loader2, Code2 } from 'lucide-react';
+import { Search, ArrowLeftRight, Download, ChevronDown, FileText, Printer, Zap, Loader2, Code2 } from 'lucide-react';
 import { useAppStore } from '@/store/useAppStore';
 import { downloadAuditMarkdown, printAuditReport } from '@/lib/exportAudit';
 
@@ -139,58 +139,63 @@ export default function Header() {
           </kbd>
         </button>
 
-        {/* Audience Mode Switcher (Header Requirement: [ Technical Mode | Plain English Mode ]) */}
-        {!isMounted ? (
-          <div className="hidden md:block h-9 w-48 rounded-full bg-[#180d0d] border border-[#A5A79B]/15 opacity-40" />
-        ) : (
-          <div className="hidden md:flex items-center p-1 rounded-full bg-[#180d0d] border border-[#A5A79B]/20 shrink-0">
-            {(['technical', 'plain'] as const).map((mode) => {
-              const isActive = audienceMode === mode;
-              return (
-                <button
-                  key={mode}
-                  type="button"
-                  onClick={() => setAudienceMode(mode)}
-                  className={`inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-mono transition-all duration-200 cursor-pointer ${
-                    isActive
-                      ? 'bg-[#590907] text-[#E8D2B5] font-semibold shadow-sm border border-[#590907]'
-                      : 'text-[#A5A79B] hover:text-[#E8D2B5]'
-                  }`}
-                >
-                  {mode === 'technical' ? (
-                    <Code2 size={13} className={isActive ? 'text-[#E8D2B5]' : 'text-[#A5A79B]'} />
-                  ) : (
-                    <FileText size={13} className={isActive ? 'text-[#E8D2B5]' : 'text-[#A5A79B]'} />
-                  )}
-                  <span>{mode === 'technical' ? 'Technical Mode' : 'Plain English Mode'}</span>
-                </button>
-              );
-            })}
-          </div>
-        )}
+        {/* Center Control Cluster: Audience Mode Switcher + Permanent Compare Button */}
+        <div className="flex items-center gap-2 shrink-0">
+          {!isMounted ? (
+            <div className="hidden md:block h-9 w-48 rounded-full bg-[#180d0d] border border-[#A5A79B]/15 opacity-40" />
+          ) : (
+            <div className="hidden md:flex items-center p-1 rounded-full bg-[#180d0d] border border-[#A5A79B]/20 shrink-0">
+              {(['technical', 'plain'] as const).map((mode) => {
+                const isActive = audienceMode === mode;
+                return (
+                  <button
+                    key={mode}
+                    type="button"
+                    onClick={() => setAudienceMode(mode)}
+                    className={`inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-mono transition-all duration-200 cursor-pointer ${
+                      isActive
+                        ? 'bg-[#590907] text-[#E8D2B5] font-semibold shadow-sm border border-[#590907]'
+                        : 'text-[#A5A79B] hover:text-[#E8D2B5]'
+                    }`}
+                  >
+                    {mode === 'technical' ? (
+                      <Code2 size={13} className={isActive ? 'text-[#E8D2B5]' : 'text-[#A5A79B]'} />
+                    ) : (
+                      <FileText size={13} className={isActive ? 'text-[#E8D2B5]' : 'text-[#A5A79B]'} />
+                    )}
+                    <span>{mode === 'technical' ? 'Technical Mode' : 'Plain English Mode'}</span>
+                  </button>
+                );
+              })}
+            </div>
+          )}
+
+          {/* Permanent Global Compare Trigger Button */}
+          <button
+            type="button"
+            onClick={() => setComparisonModalOpen(true)}
+            disabled={comparisonLoading}
+            className="inline-flex items-center gap-1.5 px-3 sm:px-3.5 py-1.5 rounded-full text-xs font-mono font-semibold bg-[#180d0d] border border-[#A5A79B]/20 text-[#E8D2B5] hover:border-[#590907] hover:bg-[#120909] transition-all cursor-pointer shadow-sm shrink-0 active:scale-95"
+            title="Open Universal Comparison Arena (Compare GitHub Repos or Live URLs)"
+          >
+            {comparisonLoading ? (
+              <>
+                <Loader2 size={13} className="animate-spin text-[#E8D2B5]" />
+                <span className="hidden sm:inline">Comparing</span>
+              </>
+            ) : (
+              <>
+                <ArrowLeftRight size={14} className="text-[#E8D2B5]" />
+                <span>Compare</span>
+              </>
+            )}
+          </button>
+        </div>
 
         {/* Right Actions */}
         <div className="flex items-center gap-2.5 shrink-0">
           {repoData && (
             <>
-              <button
-                onClick={() => setComparisonModalOpen(true)}
-                disabled={comparisonLoading}
-                className="hidden lg:flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-mono bg-[#180d0d] border border-[#A5A79B]/20 text-[#A5A79B] hover:text-[#E8D2B5] hover:border-[#590907] transition-all cursor-pointer min-w-[95px] justify-center"
-              >
-                {comparisonLoading ? (
-                  <>
-                    <Loader2 size={13} className="animate-spin text-[#E8D2B5]" />
-                    <span>Comparing</span>
-                  </>
-                ) : (
-                  <>
-                    <GitCompare size={13} />
-                    <span>Compare</span>
-                  </>
-                )}
-              </button>
-
               {/* Export Audit Dropdown */}
               <div className="relative" ref={exportDropdownRef}>
                 <button
