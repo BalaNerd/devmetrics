@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
-import { Search, GitCompare, Download, ChevronDown, FileText, Printer, Zap } from 'lucide-react';
+import { Search, GitCompare, Download, ChevronDown, FileText, Printer, Zap, Loader2 } from 'lucide-react';
 import { useAppStore } from '@/store/useAppStore';
 import { downloadAuditMarkdown, printAuditReport } from '@/lib/exportAudit';
 
@@ -50,9 +50,11 @@ export default function Header() {
   const {
     setCommandBarOpen, currentRepo, liveUrl, reset, clearLiveAudit,
     audienceMode, setAudienceMode, repoData, setComparisonModalOpen, setToast,
+    comparisonLoading,
   } = useAppStore();
   const [isMounted, setIsMounted] = useState(false);
   const [exportMenuOpen, setExportMenuOpen] = useState(false);
+  const [exportingType, setExportingType] = useState<'markdown' | 'pdf' | null>(null);
   const exportDropdownRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => { setIsMounted(true); }, []);
@@ -69,18 +71,30 @@ export default function Header() {
 
   const displayRepo = isMounted ? currentRepo : '';
 
-  const handleExportMarkdown = () => {
+  const handleExportMarkdown = async () => {
     if (!repoData) return;
-    downloadAuditMarkdown(repoData);
-    setExportMenuOpen(false);
-    setToast({ message: `Exported DEV_METRICS_AUDIT.md for ${repoData.repo.full_name}`, type: 'success' });
+    setExportingType('markdown');
+    try {
+      await new Promise((r) => setTimeout(r, 220));
+      downloadAuditMarkdown(repoData);
+      setToast({ message: `Exported DEV_METRICS_AUDIT.md for ${repoData.repo.full_name}`, type: 'success' });
+    } finally {
+      setExportingType(null);
+      setExportMenuOpen(false);
+    }
   };
 
-  const handleExportPDF = () => {
+  const handleExportPDF = async () => {
     if (!repoData) return;
-    setExportMenuOpen(false);
-    printAuditReport(repoData);
-    setToast({ message: 'Opening print dialog for PDF export...', type: 'info' });
+    setExportingType('pdf');
+    try {
+      await new Promise((r) => setTimeout(r, 220));
+      printAuditReport(repoData);
+      setToast({ message: 'Opening print dialog for PDF export...', type: 'info' });
+    } finally {
+      setExportingType(null);
+      setExportMenuOpen(false);
+    }
   };
 
   return (
@@ -156,32 +170,57 @@ export default function Header() {
             <>
               <button
                 onClick={() => setComparisonModalOpen(true)}
-                className="hidden lg:flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-mono bg-[#180d0d] border border-[#A5A79B]/20 text-[#A5A79B] hover:text-[#E8D2B5] hover:border-[#590907] transition-all cursor-pointer"
+                disabled={comparisonLoading}
+                className="hidden lg:flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-mono bg-[#180d0d] border border-[#A5A79B]/20 text-[#A5A79B] hover:text-[#E8D2B5] hover:border-[#590907] transition-all cursor-pointer min-w-[95px] justify-center"
               >
-                <GitCompare size={13} />
-                <span>Compare</span>
+                {comparisonLoading ? (
+                  <>
+                    <Loader2 size={13} className="animate-spin text-[#E8D2B5]" />
+                    <span>Comparing</span>
+                  </>
+                ) : (
+                  <>
+                    <GitCompare size={13} />
+                    <span>Compare</span>
+                  </>
+                )}
               </button>
 
               {/* Export Audit Dropdown */}
               <div className="relative" ref={exportDropdownRef}>
                 <button
                   type="button"
+                  disabled={exportingType !== null}
                   onClick={() => setExportMenuOpen((prev) => !prev)}
-                  className="hidden lg:flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-mono bg-[#180d0d] border border-[#A5A79B]/20 text-[#A5A79B] hover:text-[#E8D2B5] hover:border-[#590907] transition-all cursor-pointer"
+                  className="hidden lg:flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-mono bg-[#180d0d] border border-[#A5A79B]/20 text-[#A5A79B] hover:text-[#E8D2B5] hover:border-[#590907] transition-all cursor-pointer min-w-[120px] justify-center"
                 >
-                  <Download size={13} />
-                  <span>Export Audit</span>
-                  <ChevronDown size={11} className={`transition-transform duration-200 ${exportMenuOpen ? 'rotate-180' : ''}`} />
+                  {exportingType !== null ? (
+                    <>
+                      <Loader2 size={13} className="animate-spin text-[#E8D2B5]" />
+                      <span>Generating...</span>
+                    </>
+                  ) : (
+                    <>
+                      <Download size={13} />
+                      <span>Export Audit</span>
+                      <ChevronDown size={11} className={`transition-transform duration-200 ${exportMenuOpen ? 'rotate-180' : ''}`} />
+                    </>
+                  )}
                 </button>
 
                 {exportMenuOpen && (
                   <div className="absolute right-0 mt-2 w-56 rounded-xl bg-[#180d0d] border border-[#A5A79B]/20 shadow-2xl p-1.5 z-50 flex flex-col gap-1 backdrop-blur-2xl">
                     <button
                       type="button"
+                      disabled={exportingType !== null}
                       onClick={handleExportMarkdown}
                       className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs font-mono text-left text-[#E8D2B5] hover:bg-[#590907] hover:text-[#E8D2B5] transition-colors cursor-pointer"
                     >
-                      <FileText size={14} className="text-[#E8D2B5]" />
+                      {exportingType === 'markdown' ? (
+                        <Loader2 size={14} className="animate-spin text-[#E8D2B5]" />
+                      ) : (
+                        <FileText size={14} className="text-[#E8D2B5]" />
+                      )}
                       <div className="flex flex-col">
                         <span className="font-semibold">Markdown (.md)</span>
                         <span className="text-[10px] text-[#A5A79B]">DEV_METRICS_AUDIT.md</span>
@@ -189,10 +228,15 @@ export default function Header() {
                     </button>
                     <button
                       type="button"
+                      disabled={exportingType !== null}
                       onClick={handleExportPDF}
                       className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs font-mono text-left text-[#E8D2B5] hover:bg-[#590907] hover:text-[#E8D2B5] transition-colors cursor-pointer"
                     >
-                      <Printer size={14} className="text-[#E8D2B5]" />
+                      {exportingType === 'pdf' ? (
+                        <Loader2 size={14} className="animate-spin text-[#E8D2B5]" />
+                      ) : (
+                        <Printer size={14} className="text-[#E8D2B5]" />
+                      )}
                       <div className="flex flex-col">
                         <span className="font-semibold">Print / PDF Report</span>
                         <span className="text-[10px] text-[#A5A79B]">Formatted PDF export</span>

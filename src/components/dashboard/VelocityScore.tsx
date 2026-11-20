@@ -41,6 +41,27 @@ export default function VelocityScore({
   const finalCadence = cadence ?? commitFrequency ?? 0;
   const isActivePulse = daysSinceLastCommit <= 30 && finalScore >= 30;
 
+  const [animatedScore, setAnimatedScore] = useState(finalScore);
+
+  useEffect(() => {
+    if (!isMounted) return;
+    const startVal = 0;
+    const endVal = finalScore;
+    const duration = 1200;
+    const startTime = performance.now();
+
+    const step = (now: number) => {
+      const elapsed = now - startTime;
+      const progress = Math.min(elapsed / duration, 1);
+      const eased = 1 - Math.pow(1 - progress, 3);
+      setAnimatedScore(Math.round(startVal + (endVal - startVal) * eased));
+      if (progress < 1) requestAnimationFrame(step);
+    };
+
+    const id = requestAnimationFrame(step);
+    return () => cancelAnimationFrame(id);
+  }, [finalScore, isMounted]);
+
   // 30-Day commit variance calculation (uses deterministic commit-timestamp anchor for SSR compatibility)
   const { varianceStr, latestSha, churnRatio } = (() => {
     const msPerDay = 86400000;
@@ -174,7 +195,7 @@ export default function VelocityScore({
           {/* Center Readout: Large Velocity Score */}
           <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
             <span className="text-4xl md:text-5xl font-extrabold font-mono text-[#E8D2B5] tracking-tight tabular-nums">
-              {finalScore}
+              {isMounted ? animatedScore : finalScore}
             </span>
             <span suppressHydrationWarning className="text-[10px] uppercase font-mono tracking-widest text-[#A5A79B] font-semibold mt-0.5">
               {isPlain ? 'Pulse Score' : '/ 100'}

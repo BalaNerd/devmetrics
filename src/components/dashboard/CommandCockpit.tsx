@@ -13,6 +13,7 @@ import {
   Layers,
   Activity,
   CornerDownLeft,
+  Loader2,
 } from 'lucide-react';
 import { useAppStore } from '@/store/useAppStore';
 import { useRepo } from '@/hooks/useRepo';
@@ -92,9 +93,11 @@ export default function CommandCockpit() {
     setIsMounted(true);
   }, []);
 
-  const { setCurrentRepo, recentSearches } = useAppStore();
+  const { setCurrentRepo, recentSearches, fetchStatus, liveAuditStatus } = useAppStore();
   const { fetchRepo } = useRepo();
   const { auditUrl } = useLiveAudit();
+
+  const isLoading = fetchStatus === 'loading' || liveAuditStatus === 'loading';
 
   const handleDispatch = (targetString: string) => {
     const trimmed = targetString.trim();
@@ -153,11 +156,20 @@ export default function CommandCockpit() {
 
           <button
             type="submit"
-            disabled={!inputValue.trim()}
-            className="bg-[#590907] hover:bg-[#77110f] disabled:opacity-40 disabled:hover:bg-[#590907] text-[#E8D2B5] font-mono text-xs font-semibold px-4 py-2.5 rounded-xl border border-[#E8D2B5]/15 transition-all flex items-center justify-center gap-2 cursor-pointer shadow-lg shadow-[#590907]/30 shrink-0"
+            disabled={!inputValue.trim() || isLoading}
+            className="min-w-[170px] bg-[#590907] hover:bg-[#77110f] disabled:opacity-50 disabled:hover:bg-[#590907] text-[#E8D2B5] font-mono text-xs font-semibold px-4 py-2.5 rounded-xl border border-[#E8D2B5]/15 transition-all flex items-center justify-center gap-2 cursor-pointer shadow-lg shadow-[#590907]/30 shrink-0"
           >
-            <span>Analyze Telemetry</span>
-            <CornerDownLeft size={13} className="opacity-80" />
+            {isLoading && selectedTarget === inputValue.trim() ? (
+              <>
+                <Loader2 size={13} className="animate-spin text-[#E8D2B5]" />
+                <span className="opacity-90">Analyzing...</span>
+              </>
+            ) : (
+              <>
+                <span>Analyze Telemetry</span>
+                <CornerDownLeft size={13} className="opacity-80" />
+              </>
+            )}
           </button>
         </form>
 
@@ -246,8 +258,16 @@ export default function CommandCockpit() {
 
                 {/* Bottom Action Hint */}
                 <div className="pt-4 mt-3 border-t border-[#A5A79B]/10 flex items-center justify-between text-[11px] font-mono text-[#A5A79B] group-hover:text-[#E8D2B5] transition-colors">
-                  <span>Dispatch Audit</span>
-                  <ArrowRight size={13} className="transform group-hover:translate-x-1 transition-transform text-[#590907] group-hover:text-[#E8D2B5]" />
+                  <span>
+                    {isLoading && selectedTarget === profile.target
+                      ? 'Dispatching...'
+                      : 'Dispatch Audit'}
+                  </span>
+                  {isLoading && selectedTarget === profile.target ? (
+                    <Loader2 size={13} className="animate-spin text-[#E8D2B5]" />
+                  ) : (
+                    <ArrowRight size={13} className="transform group-hover:translate-x-1 transition-transform text-[#590907] group-hover:text-[#E8D2B5]" />
+                  )}
                 </div>
               </div>
             );

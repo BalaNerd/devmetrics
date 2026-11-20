@@ -11,7 +11,10 @@ import HealthChecklist from "@/components/dashboard/HealthChecklist";
 import WorkbenchLayout from "@/components/dashboard/WorkbenchLayout";
 import LiveUrlAudit from "@/components/dashboard/LiveUrlAudit";
 import CommandCockpit from "@/components/dashboard/CommandCockpit";
+import SteppedAuditLoader from "@/components/ui/SteppedAuditLoader";
+import PullToRefresh from "@/components/ui/PullToRefresh";
 import { useRepo } from "@/hooks/useRepo";
+import { useLiveAudit } from "@/hooks/useLiveAudit";
 import { useAppStore } from "@/store/useAppStore";
 import { Zap, AlertCircle, RefreshCw, Key } from "lucide-react";
 
@@ -29,6 +32,15 @@ export default function DashboardPage() {
   } = useAppStore();
 
   const { data, loading, fetchRepo } = useRepo(currentRepo || undefined);
+  const { auditUrl } = useLiveAudit();
+
+  const handleRefresh = async () => {
+    if (liveUrl) {
+      await auditUrl(liveUrl);
+    } else if (currentRepo) {
+      await fetchRepo(currentRepo);
+    }
+  };
 
   const hasLiveAuditActive = Boolean(
     liveAuditData || liveAuditStatus === "loading" || liveAuditStatus === "error" || liveUrl
@@ -59,48 +71,38 @@ export default function DashboardPage() {
       <div className="relative z-10">
         <Header />
 
-        {/* Fluid Responsive Canvas */}
-        <main className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
-          <AnimatePresence mode="wait">
-            {!hasActiveQuery ? (
-              <motion.div
-                key="command-cockpit"
-                initial={{ opacity: 0, y: 14 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -14 }}
-                transition={{ duration: 0.28, ease: "easeInOut" }}
-              >
-                <CommandCockpit />
-              </motion.div>
-            ) : (
-              <motion.div
-                key="workspace-dashboard"
-                initial={{ opacity: 0, y: 14 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -14 }}
-                transition={{ duration: 0.3, ease: "easeInOut" }}
-                className="space-y-6 sm:space-y-8"
-              >
-                {/* Live URL Inspection View */}
-                {hasLiveAuditActive && <LiveUrlAudit />}
+        {/* Fluid Responsive Canvas with Mobile Pull-to-Refresh */}
+        <PullToRefresh onRefresh={handleRefresh} isRefreshing={loading}>
+          <main className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
+            <AnimatePresence mode="wait">
+              {!hasActiveQuery ? (
+                <motion.div
+                  key="command-cockpit"
+                  initial={{ opacity: 0, y: 14 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -14 }}
+                  transition={{ duration: 0.28, ease: "easeInOut" }}
+                >
+                  <CommandCockpit />
+                </motion.div>
+              ) : (
+                <motion.div
+                  key="workspace-dashboard"
+                  initial={{ opacity: 0, y: 14 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -14 }}
+                  transition={{ duration: 0.3, ease: "easeInOut" }}
+                  className="space-y-6 sm:space-y-8"
+                >
+                  {/* Live URL Inspection View */}
+                  {hasLiveAuditActive && <LiveUrlAudit />}
 
-                {/* Loading State for Repository Telemetry */}
-                {loading && !hasLiveAuditActive && (
-                  <div className="w-full min-h-[460px] flex flex-col items-center justify-center p-8 bg-[#180d0d]/80 border border-[#A5A79B]/15 rounded-2xl backdrop-blur-xl shadow-2xl">
-                    <div className="relative flex items-center justify-center w-14 h-14 mb-4">
-                      <div className="absolute inset-0 rounded-full border-2 border-[#590907] border-t-[#E8D2B5] animate-spin" />
-                      <Zap size={22} className="text-[#E8D2B5] animate-pulse" />
-                    </div>
-                    <h3 className="font-sans font-bold text-lg text-[#E8D2B5]">
-                      Ingesting Repository Telemetry
-                    </h3>
-                    <p className="font-mono text-xs text-[#A5A79B] mt-1 tracking-wider text-center max-w-md">
-                      Resolving <span className="text-[#E8D2B5] font-semibold">{currentRepo}</span> · Commits, Contributors, Directives, CI/CD...
-                    </p>
-                  </div>
-                )}
+                  {/* Stepped Multi-Stage Audit Loader */}
+                  {loading && !hasLiveAuditActive && (
+                    <SteppedAuditLoader target={currentRepo} type="repo" />
+                  )}
 
-                {/* Error State for Repository Telemetry */}
+                  {/* Error State for Repository Telemetry */}
                 {!loading && fetchStatus === "error" && !hasLiveAuditActive && (
                   <div className="w-full bg-[#180d0d]/90 border border-[#590907] rounded-2xl p-6 sm:p-8 backdrop-blur-xl shadow-2xl text-center space-y-4 max-w-xl mx-auto my-12">
                     <div className="w-12 h-12 rounded-full bg-[#590907]/30 border border-[#590907] text-[#E8D2B5] flex items-center justify-center mx-auto">
@@ -212,7 +214,8 @@ export default function DashboardPage() {
             )}
           </AnimatePresence>
         </main>
-      </div>
+      </PullToRefresh>
+    </div>
     </div>
   );
 }

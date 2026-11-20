@@ -1,5 +1,6 @@
 'use client';
 
+import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import {
   Globe,
@@ -21,6 +22,7 @@ import {
 import { useAppStore } from '@/store/useAppStore';
 import { useRepo } from '@/hooks/useRepo';
 import { useLiveAudit } from '@/hooks/useLiveAudit';
+import SteppedAuditLoader from '@/components/ui/SteppedAuditLoader';
 
 function CircularGauge({
   score,
@@ -31,6 +33,28 @@ function CircularGauge({
   label: string;
   subtitle: string;
 }) {
+  const [animatedScore, setAnimatedScore] = useState(score);
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+    const startVal = 0;
+    const endVal = score;
+    const duration = 1000;
+    const startTime = performance.now();
+
+    const step = (now: number) => {
+      const elapsed = now - startTime;
+      const progress = Math.min(elapsed / duration, 1);
+      const eased = 1 - Math.pow(1 - progress, 3);
+      setAnimatedScore(Math.round(startVal + (endVal - startVal) * eased));
+      if (progress < 1) requestAnimationFrame(step);
+    };
+
+    const id = requestAnimationFrame(step);
+    return () => cancelAnimationFrame(id);
+  }, [score]);
+
   const SIZE = 96;
   const strokeWidth = 7;
   const radius = (SIZE - strokeWidth * 2) / 2;
@@ -64,7 +88,7 @@ function CircularGauge({
             strokeDasharray={circumference}
             initial={{ strokeDashoffset: circumference }}
             animate={{ strokeDashoffset: offset }}
-            transition={{ duration: 1.1, ease: 'easeOut' }}
+            transition={{ duration: 1.1, ease: [0.16, 1, 0.3, 1] }}
             strokeLinecap="round"
             style={{
               filter: 'drop-shadow(0 0 8px rgba(232, 210, 181, 0.5))',
@@ -72,7 +96,7 @@ function CircularGauge({
           />
         </svg>
         <span className="absolute font-mono font-extrabold text-xl text-[#E8D2B5] tabular-nums">
-          {score}
+          {mounted ? animatedScore : score}
         </span>
       </div>
       <p className="text-xs font-bold text-[#E8D2B5] mt-2 font-sans tracking-tight">
@@ -105,26 +129,11 @@ export default function LiveUrlAudit() {
   // Loading state
   if (liveAuditStatus === 'loading') {
     return (
-      <div className="w-full bg-[#180d0d]/85 backdrop-blur-xl border border-[#A5A79B]/15 rounded-2xl p-6 sm:p-8 space-y-5 shadow-2xl relative overflow-hidden">
-        <div className="flex items-center gap-3.5">
-          <div className="w-10 h-10 rounded-xl bg-[#590907]/30 border border-[#590907] flex items-center justify-center animate-spin text-[#E8D2B5]">
-            <RefreshCw size={18} />
-          </div>
-          <div>
-            <h3 className="text-base sm:text-lg font-bold text-[#E8D2B5] font-sans">
-              Inspecting Live Deployment: {liveUrl}
-            </h3>
-            <p className="text-xs sm:text-sm text-[#A5A79B] font-sans">
-              Measuring TTFB, probing HTTP edge headers, scanning tech stack & Core Web Vitals...
-            </p>
-          </div>
-        </div>
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-2">
-          <div className="h-28 bg-[#120909] rounded-xl border border-[#A5A79B]/15 animate-pulse" />
-          <div className="h-28 bg-[#120909] rounded-xl border border-[#A5A79B]/15 animate-pulse" />
-          <div className="h-28 bg-[#120909] rounded-xl border border-[#A5A79B]/15 animate-pulse" />
-        </div>
-      </div>
+      <SteppedAuditLoader
+        target={liveUrl || 'Target Deployment'}
+        type="liveUrl"
+        onCancel={clearLiveAudit}
+      />
     );
   }
 

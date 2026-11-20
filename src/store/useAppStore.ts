@@ -54,6 +54,7 @@ interface AppState {
   // Comparison Modal
   comparisonModalOpen: boolean;
   comparisonTargetRepo: string;
+  comparisonLoading: boolean;
 
   // Badge modal
   badgeModalOpen: boolean;
@@ -70,6 +71,7 @@ interface AppState {
   setCommandQuery: (q: string) => void;
   setComparisonModalOpen: (open: boolean) => void;
   setComparisonTargetRepo: (repo: string) => void;
+  setComparisonLoading: (loading: boolean) => void;
   setBadgeModalOpen: (open: boolean) => void;
   reset: () => void;
 }
@@ -150,6 +152,7 @@ export const useAppStore = create<AppState>((set, get) => ({
 
   comparisonModalOpen: false,
   comparisonTargetRepo: '',
+  comparisonLoading: false,
 
   badgeModalOpen: false,
 
@@ -176,6 +179,7 @@ export const useAppStore = create<AppState>((set, get) => ({
   setCommandQuery: (q) => set({ commandQuery: q }),
   setComparisonModalOpen: (open) => set({ comparisonModalOpen: open }),
   setComparisonTargetRepo: (repo) => set({ comparisonTargetRepo: repo }),
+  setComparisonLoading: (loading) => set({ comparisonLoading: loading }),
   setBadgeModalOpen: (open) => set({ badgeModalOpen: open }),
   reset: () =>
     set({

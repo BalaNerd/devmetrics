@@ -20,6 +20,7 @@ import {
   Sparkles,
 } from 'lucide-react';
 import Image from 'next/image';
+import SteppedAuditLoader from '@/components/ui/SteppedAuditLoader';
 import { useAppStore } from '@/store/useAppStore';
 import {
   ghFetch,
@@ -69,6 +70,7 @@ export default function RepoComparisonModal() {
     currentRepo,
     setCurrentRepo,
     githubToken,
+    setComparisonLoading,
   } = useAppStore();
 
   const [repoAInput, setRepoAInput] = useState('');
@@ -157,6 +159,7 @@ export default function RepoComparisonModal() {
     async (aStr: string, bStr: string) => {
       if (!aStr.trim() || !bStr.trim()) return;
       setLoading(true);
+      setComparisonLoading(true);
       setError(null);
 
       try {
@@ -170,9 +173,10 @@ export default function RepoComparisonModal() {
         setError(err?.message || 'Failed to fetch repositories for head-to-head comparison.');
       } finally {
         setLoading(false);
+        setComparisonLoading(false);
       }
     },
-    [githubToken]
+    [githubToken, setComparisonLoading]
   );
 
   // Auto run comparison when modal opens if data not loaded yet
@@ -328,10 +332,19 @@ export default function RepoComparisonModal() {
               <button
                 onClick={() => handleCompare(repoAInput, repoBInput)}
                 disabled={loading || !repoAInput.trim() || !repoBInput.trim()}
-                className="px-4 py-2 rounded-xl text-xs font-mono font-semibold bg-[#590907] hover:bg-[#77110f] text-[#E8D2B5] border border-[#590907] transition-all disabled:opacity-50 flex items-center gap-1.5 cursor-pointer shadow-md shrink-0"
+                className="min-w-[215px] justify-center px-4 py-2 rounded-xl text-xs font-mono font-semibold bg-[#590907] hover:bg-[#77110f] text-[#E8D2B5] border border-[#590907] transition-all disabled:opacity-50 flex items-center gap-2 cursor-pointer shadow-md shrink-0"
               >
-                {loading ? <Loader2 size={13} className="animate-spin" /> : <GitCompare size={13} />}
-                <span>Run Telemetry Comparison</span>
+                {loading ? (
+                  <>
+                    <Loader2 size={13} className="animate-spin text-[#E8D2B5]" />
+                    <span>Comparing Repositories...</span>
+                  </>
+                ) : (
+                  <>
+                    <GitCompare size={13} />
+                    <span>Run Telemetry Comparison</span>
+                  </>
+                )}
               </button>
             </div>
 
@@ -342,13 +355,13 @@ export default function RepoComparisonModal() {
             )}
           </div>
 
-          {/* Loading State */}
+          {/* Loading State with Stepped Progress */}
           {loading && (
-            <div className="py-16 flex flex-col items-center justify-center gap-3">
-              <div className="w-8 h-8 border-2 border-[#590907] border-t-[#E8D2B5] rounded-full animate-spin" />
-              <p className="text-xs font-mono uppercase tracking-widest text-[#A5A79B]">
-                Benchmarking dual repository telemetry...
-              </p>
+            <div className="py-4">
+              <SteppedAuditLoader
+                target={`${repoAInput} vs ${repoBInput}`}
+                type="repo"
+              />
             </div>
           )}
 
