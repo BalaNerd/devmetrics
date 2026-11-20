@@ -1,7 +1,7 @@
 'use client';
 
-import { useState } from 'react';
-import { Terminal, Activity, ShieldCheck, Cpu, Briefcase, Flame, Timer } from 'lucide-react';
+import { useState, useRef, useEffect } from 'react';
+import { Terminal, Activity, ShieldCheck, Cpu, Briefcase, Flame, Timer, ChevronLeft, ChevronRight } from 'lucide-react';
 import type { RepoData } from '@/lib/github';
 import EngineeringDirectives from './EngineeringDirectives';
 import PunchCard from './PunchCard';
@@ -48,6 +48,47 @@ export default function WorkbenchLayout({
   const activeTab = controlledTab ?? internalTab;
   const setActiveTab = setControlledTab ?? setInternalTab;
 
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const [canScrollLeft, setCanScrollLeft] = useState(false);
+  const [canScrollRight, setCanScrollRight] = useState(false);
+
+  const checkScroll = () => {
+    if (!scrollRef.current) return;
+    const { scrollLeft, scrollWidth, clientWidth } = scrollRef.current;
+    setCanScrollLeft(scrollLeft > 4);
+    setCanScrollRight(scrollLeft < scrollWidth - clientWidth - 4);
+  };
+
+  useEffect(() => {
+    checkScroll();
+    const el = scrollRef.current;
+    if (el) {
+      el.addEventListener('scroll', checkScroll, { passive: true });
+      window.addEventListener('resize', checkScroll);
+      return () => {
+        el.removeEventListener('scroll', checkScroll);
+        window.removeEventListener('resize', checkScroll);
+      };
+    }
+  }, []);
+
+  const handleScroll = (direction: 'left' | 'right') => {
+    if (!scrollRef.current) return;
+    scrollRef.current.scrollBy({
+      left: direction === 'left' ? -200 : 200,
+      behavior: 'smooth',
+    });
+  };
+
+  const handleWheel = (e: React.WheelEvent<HTMLDivElement>) => {
+    if (!scrollRef.current) return;
+    if (scrollRef.current.scrollWidth > scrollRef.current.clientWidth) {
+      if (Math.abs(e.deltaY) > Math.abs(e.deltaX)) {
+        scrollRef.current.scrollLeft += e.deltaY;
+      }
+    }
+  };
+
   return (
     <div className="w-full bg-[#180d0d] border border-[#A5A79B]/15 rounded-2xl p-6 shadow-2xl min-h-[640px] flex flex-col justify-start relative overflow-hidden gap-6">
       {/* Subtle Ambient Backlight Glow */}
@@ -56,33 +97,64 @@ export default function WorkbenchLayout({
         aria-hidden="true"
       />
 
-      {/* Horizontally scrollable segmented tab switcher at the top */}
-      <div className="relative z-10 flex items-center justify-between flex-wrap gap-3 pb-3 border-b border-[#A5A79B]/15">
-        <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar w-full p-1 bg-[#120909] rounded-xl border border-[#A5A79B]/15">
-          {WORKBENCH_TABS.map((tab) => {
-            const isTabActive = activeTab === tab.id;
-            const Icon = tab.icon;
+      {/* Segmented Tab Switcher with Desktop Multi-Row Wrap & Mobile Controls */}
+      <div className="relative z-10 pb-3 border-b border-[#A5A79B]/15">
+        <div className="relative flex items-center w-full">
+          {/* Mobile Left Chevron */}
+          {canScrollLeft && (
+            <button
+              type="button"
+              onClick={() => handleScroll('left')}
+              className="md:hidden absolute -left-2 z-20 w-8 h-8 rounded-full bg-[#180d0d] border border-[#590907] text-[#E8D2B5] shadow-lg flex items-center justify-center cursor-pointer hover:bg-[#590907] transition-all"
+              aria-label="Scroll tabs left"
+            >
+              <ChevronLeft size={16} />
+            </button>
+          )}
 
-            return (
-              <button
-                key={tab.id}
-                type="button"
-                onClick={() => setActiveTab(tab.id)}
-                className={`
-                  flex items-center gap-2 px-3.5 sm:px-4 py-2 min-h-[44px] rounded-lg text-xs sm:text-sm font-mono font-medium whitespace-nowrap transition-all duration-200 ease-out cursor-pointer shrink-0 active:scale-95
-                  ${
-                    isTabActive
-                      ? 'bg-[#590907] text-[#E8D2B5] font-semibold shadow-md shadow-black/40 border border-[#590907]'
-                      : 'text-[#A5A79B] hover:text-[#E8D2B5] hover:bg-[#180d0d]'
-                  }
-                `}
-              >
-                <Icon size={14} className={isTabActive ? 'text-[#E8D2B5]' : 'text-[#A5A79B]'} />
-                <span className="hidden sm:inline">{tab.label}</span>
-                <span className="inline sm:hidden">{tab.shortLabel}</span>
-              </button>
-            );
-          })}
+          {/* Tab container: Multi-row wrap on desktop (md:flex-wrap), smooth horizontal scroll on mobile */}
+          <div
+            ref={scrollRef}
+            onWheel={handleWheel}
+            className="flex md:flex-wrap items-center gap-2 overflow-x-auto md:overflow-visible no-scrollbar w-full p-1.5 bg-[#120909] rounded-2xl border border-[#A5A79B]/15"
+          >
+            {WORKBENCH_TABS.map((tab) => {
+              const isTabActive = activeTab === tab.id;
+              const Icon = tab.icon;
+
+              return (
+                <button
+                  key={tab.id}
+                  type="button"
+                  onClick={() => setActiveTab(tab.id)}
+                  className={`
+                    flex items-center gap-2 px-3 py-2 min-h-[38px] rounded-xl text-xs font-mono font-medium whitespace-nowrap transition-all duration-200 ease-out cursor-pointer shrink-0 active:scale-95
+                    ${
+                      isTabActive
+                        ? 'bg-[#590907] text-[#E8D2B5] shadow-md shadow-[#590907]/30 border border-[#590907]'
+                        : 'bg-[#120909]/60 border border-[#A5A79B]/15 text-[#A5A79B] hover:text-[#E8D2B5] hover:border-[#590907]/50'
+                    }
+                  `}
+                >
+                  <Icon size={14} className={isTabActive ? 'text-[#E8D2B5]' : 'text-[#A5A79B]'} />
+                  <span className="hidden sm:inline">{tab.label}</span>
+                  <span className="inline sm:hidden">{tab.shortLabel}</span>
+                </button>
+              );
+            })}
+          </div>
+
+          {/* Mobile Right Chevron */}
+          {canScrollRight && (
+            <button
+              type="button"
+              onClick={() => handleScroll('right')}
+              className="md:hidden absolute -right-2 z-20 w-8 h-8 rounded-full bg-[#180d0d] border border-[#590907] text-[#E8D2B5] shadow-lg flex items-center justify-center cursor-pointer hover:bg-[#590907] transition-all"
+              aria-label="Scroll tabs right"
+            >
+              <ChevronRight size={16} />
+            </button>
+          )}
         </div>
       </div>
 
