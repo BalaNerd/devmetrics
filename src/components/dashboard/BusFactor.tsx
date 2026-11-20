@@ -92,10 +92,10 @@ export default function BusFactor({
             <Users size={17} />
           </div>
           <div>
-            <span suppressHydrationWarning className="text-[11px] font-semibold tracking-[0.2em] uppercase text-[#A5A79B]/80 font-mono block">
+            <span suppressHydrationWarning className="text-[11px] font-bold tracking-[0.2em] uppercase text-[#A5A79B]/90 font-mono block">
               {isPlain ? 'TEAM STRUCTURE' : 'PARETO BUS FACTOR & KEY PERSON RISK'}
             </span>
-            <h3 suppressHydrationWarning className="text-xl font-bold tracking-tight text-[#E8D2B5] font-sans mt-0.5">
+            <h3 suppressHydrationWarning className="text-xl sm:text-2xl font-bold tracking-tight text-[#E8D2B5] font-sans mt-0.5">
               {isPlain ? 'Team Dynamics' : 'Contributor Centralization'}
             </h3>
           </div>
@@ -239,7 +239,7 @@ export default function BusFactor({
       </div>
 
       {/* Conversational Narrative */}
-      <p suppressHydrationWarning className="font-sans text-sm text-[#A5A79B] leading-relaxed pt-2 border-t border-[#A5A79B]/15 relative z-10">
+      <p suppressHydrationWarning className="font-sans text-sm sm:text-[15px] font-medium text-[#A5A79B] leading-relaxed pt-2 border-t border-[#A5A79B]/15 relative z-10">
         {isPlain ? (
           isSolo ? (
             <>
@@ -252,11 +252,11 @@ export default function BusFactor({
           )
         ) : isSolo ? (
           <>
-            Over <strong className="font-semibold text-[#E8D2B5]">{topPct}% of all commits</strong> originate from @{finalMetrics.dominantContributor}. Establishing <strong className="font-semibold text-[#E8D2B5]">CODEOWNERS</strong> paths distributes review load and eliminates institutional lock-in.
+            Over <strong className="font-bold text-[#E8D2B5]">{topPct}% of all commits</strong> originate from @{finalMetrics.dominantContributor}. Establishing <strong className="font-bold text-[#E8D2B5]">CODEOWNERS</strong> paths distributes review load and eliminates institutional lock-in.
           </>
         ) : (
           <>
-            <strong className="font-semibold text-[#E8D2B5]">Decentralized commit topology</strong> across {count} maintainers ensures high throughput and sustainable PR turnaround.
+            <strong className="font-bold text-[#E8D2B5]">Decentralized commit topology</strong> across {count} maintainers ensures high throughput and sustainable PR turnaround.
           </>
         )}
       </p>

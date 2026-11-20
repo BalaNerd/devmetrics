@@ -3,7 +3,9 @@ import {
   extractGitHubRepoFromHtml,
   detectTechStack,
   extractMetaInfo,
+  extractSecurityHeaders,
   fetchPageSpeedMetrics,
+  generateLiveDirectives,
   buildPlainEnglishReview,
   type LiveAuditData,
 } from '@/lib/liveAuditor';
@@ -50,29 +52,37 @@ export async function GET(req: NextRequest) {
     const html = await response.text();
     const htmlSizeBytes = new Blob([html]).size;
 
-    // 1. Meta information
-    const { title, description } = extractMetaInfo(html);
+    // 1. Meta information & asset counts
+    const metadata = extractMetaInfo(html);
 
-    // 2. Discover GitHub Source Repository
+    // 2. Security headers
+    const security = extractSecurityHeaders(response.headers);
+
+    // 3. Discover GitHub Source Repository
     const discoveredGitHubRepo = extractGitHubRepoFromHtml(html);
 
-    // 3. Tech stack detection
+    // 4. Tech stack detection
     const techStack = detectTechStack(response.headers, html);
 
-    // 4. PageSpeed & Core Web Vitals
+    // 5. PageSpeed & Core Web Vitals
     const metrics = await fetchPageSpeedMetrics(
       finalUrl,
       ttfbMs,
       htmlSizeBytes,
-      Boolean(title && description)
+      Boolean(metadata.title && metadata.description)
     );
 
-    // 5. Plain English Website Review
+    // 6. Actionable Website Improvement Directives
+    const directives = generateLiveDirectives(finalUrl, metadata, security, ttfbMs, metrics);
+
+    // 7. Plain English 5-Dimension Website Review
     const plainEnglishReview = buildPlainEnglishReview(
       finalUrl,
       ttfbMs,
       metrics,
       techStack,
+      metadata,
+      security,
       discoveredGitHubRepo
     );
 
@@ -92,11 +102,14 @@ export async function GET(req: NextRequest) {
       isHttps,
       edgeCacheStatus,
       serverHeader,
-      title: title || finalHostname,
-      description,
+      title: metadata.title || finalHostname,
+      description: metadata.description,
       discoveredGitHubRepo,
       techStack,
       metrics,
+      metadata,
+      security,
+      directives,
       plainEnglishReview,
       inspectedAt: new Date().toISOString(),
     };
@@ -113,4 +126,3 @@ export async function GET(req: NextRequest) {
     );
   }
 }
-

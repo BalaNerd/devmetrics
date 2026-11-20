@@ -130,11 +130,11 @@ export default function CommandCockpit() {
           DEV_METRICS TELEMETRY DISPATCH v1.0
         </span>
 
-        <h1 className="text-4xl sm:text-5xl md:text-6xl font-serif font-normal tracking-normal text-[#E8D2B5] text-center max-w-3xl mx-auto leading-[1.12]">
+        <h1 className="text-4xl sm:text-5xl md:text-6xl font-serif font-normal tracking-normal text-[#E8D2B5] text-center max-w-3xl mx-auto leading-[1.12] drop-shadow-[0_1px_14px_rgba(232,210,181,0.15)]">
           Inspect Codebase Velocity &amp; Infrastructure.
         </h1>
 
-        <p className="text-xs sm:text-sm font-sans text-[#A5A79B] max-w-xl mx-auto leading-relaxed">
+        <p className="text-sm sm:text-base font-sans font-medium text-[#A5A79B] max-w-xl mx-auto leading-relaxed">
           Quantitative engineering intelligence, shipping cadence, maintainer centralization, and live edge deployment audits.
         </p>
 

@@ -24,10 +24,9 @@ import {
   AlertCircle,
   Clock,
   Layers,
-  Flame,
 } from 'lucide-react';
 import Image from 'next/image';
-import { useAppStore, type AudienceMode } from '@/store/useAppStore';
+import { useAppStore } from '@/store/useAppStore';
 import {
   ghFetch,
   parseRepoInput,
@@ -107,7 +106,7 @@ function AnimatedNumber({
   useEffect(() => {
     let start = 0;
     const end = value;
-    const duration = 750;
+    const duration = 650;
     const startTime = performance.now();
 
     const step = (now: number) => {
@@ -126,7 +125,7 @@ function AnimatedNumber({
   }, [value]);
 
   return (
-    <span suppressHydrationWarning className="tabular-nums">
+    <span suppressHydrationWarning className="tabular-nums font-mono font-extrabold text-[#E8D2B5]">
       {display.toFixed(decimals)}
       {suffix}
     </span>
@@ -142,6 +141,7 @@ export default function RepoComparisonModal() {
     repoData,
     currentRepo,
     setCurrentRepo,
+    liveUrl,
     githubToken,
     setComparisonLoading,
     audienceMode,
@@ -152,8 +152,9 @@ export default function RepoComparisonModal() {
   const [repoBInput, setRepoBInput] = useState('');
   const [targetA, setTargetA] = useState<ComparisonTarget | null>(null);
   const [targetB, setTargetB] = useState<ComparisonTarget | null>(null);
+  const [errorA, setErrorA] = useState<string | null>(null);
+  const [errorB, setErrorB] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
   const [selectedCategory, setSelectedCategory] = useState<MetricCategory>('all');
   const [isSwapped, setIsSwapped] = useState(false);
   const [isMounted, setIsMounted] = useState(false);
@@ -162,14 +163,14 @@ export default function RepoComparisonModal() {
     setIsMounted(true);
   }, []);
 
-  // Initialize input values from currently loaded repo
+  // Pre-populate Contender A automatically from active repo or live URL
   useEffect(() => {
     if (comparisonModalOpen) {
-      const active = repoData?.repo?.full_name || currentRepo || 'vercel/next.js';
+      const active = liveUrl || repoData?.repo?.full_name || currentRepo || 'vercel/next.js';
       if (!repoAInput) setRepoAInput(active);
       if (!repoBInput) setRepoBInput('remix-run/react-router');
     }
-  }, [comparisonModalOpen, repoData, currentRepo, repoAInput, repoBInput]);
+  }, [comparisonModalOpen, liveUrl, repoData, currentRepo, repoAInput, repoBInput]);
 
   // Close on Escape key
   useEffect(() => {
@@ -258,52 +259,61 @@ export default function RepoComparisonModal() {
     }
   };
 
-  // Concurrent dual comparison fetch
+  // Resilient concurrent dual comparison fetch with per-contender error boundaries
   const handleCompare = useCallback(
     async (aStr: string, bStr: string) => {
-      if (!aStr.trim() || !bStr.trim()) return;
+      if (!aStr.trim() && !bStr.trim()) return;
       setLoading(true);
       setComparisonLoading(true);
-      setError(null);
 
-      try {
-        const [resA, resB] = await Promise.all([
-          fetchTarget(aStr),
-          fetchTarget(bStr),
-        ]);
-        setTargetA(resA);
-        setTargetB(resB);
-      } catch (err: any) {
-        setError(err?.message || 'Failed to fetch targets for head-to-head comparison.');
-      } finally {
-        setLoading(false);
-        setComparisonLoading(false);
+      const results = await Promise.allSettled([
+        aStr.trim() ? fetchTarget(aStr.trim()) : Promise.reject(new Error('Enter Target A')),
+        bStr.trim() ? fetchTarget(bStr.trim()) : Promise.reject(new Error('Enter Target B')),
+      ]);
+
+      if (results[0].status === 'fulfilled') {
+        setTargetA(results[0].value);
+        setErrorA(null);
+      } else {
+        setErrorA(results[0].reason?.message || 'Failed to inspect Target A');
       }
+
+      if (results[1].status === 'fulfilled') {
+        setTargetB(results[1].value);
+        setErrorB(null);
+      } else {
+        setErrorB(results[1].reason?.message || 'Failed to inspect Target B');
+      }
+
+      setLoading(false);
+      setComparisonLoading(false);
     },
     [githubToken, setComparisonLoading]
   );
 
   // Auto-run comparison on modal open if not already populated
   useEffect(() => {
-    if (comparisonModalOpen && !targetA && !targetB) {
-      const a = repoData?.repo?.full_name || currentRepo || 'vercel/next.js';
+    if (comparisonModalOpen && !targetA && !targetB && !errorA && !errorB) {
+      const a = liveUrl || repoData?.repo?.full_name || currentRepo || 'vercel/next.js';
       const b = 'remix-run/react-router';
       handleCompare(a, b);
     }
-  }, [comparisonModalOpen, repoData, currentRepo, targetA, targetB, handleCompare]);
+  }, [comparisonModalOpen, repoData, currentRepo, liveUrl, targetA, targetB, errorA, errorB, handleCompare]);
 
-  // Contender swap handler
+  // Contender swap handler with 180deg spring rotation
   const handleSwapContenders = () => {
     setIsSwapped((prev) => !prev);
     const tempInput = repoAInput;
     setRepoAInput(repoBInput);
     setRepoBInput(tempInput);
 
-    if (targetA && targetB) {
-      const tempTarget = targetA;
-      setTargetA(targetB);
-      setTargetB(tempTarget);
-    }
+    const tempTarget = targetA;
+    setTargetA(targetB);
+    setTargetB(tempTarget);
+
+    const tempError = errorA;
+    setErrorA(errorB);
+    setErrorB(tempError);
   };
 
   const isPlain = isMounted && audienceMode === 'plain';
@@ -662,7 +672,7 @@ export default function RepoComparisonModal() {
           animate={{ opacity: 1, scale: 1, y: 0 }}
           exit={{ opacity: 0, scale: 0.96, y: 16 }}
           transition={{ type: 'spring', damping: 28, stiffness: 320 }}
-          className="relative w-full max-w-5xl rounded-2xl border border-[#A5A79B]/20 bg-[#180d0d] shadow-2xl p-5 sm:p-8 overflow-hidden z-10 flex flex-col gap-6 max-h-[92vh] overflow-y-auto"
+          className="relative w-full max-w-5xl rounded-2xl border border-[#A5A79B]/20 bg-[#180d0d] shadow-2xl p-5 sm:p-8 overflow-hidden z-10 flex flex-col gap-6 max-h-[88vh] overflow-y-auto"
           style={{
             boxShadow: '0 30px 80px rgba(0, 0, 0, 0.85), inset 0 1px 0 rgba(232, 210, 181, 0.08)',
           }}
@@ -680,10 +690,10 @@ export default function RepoComparisonModal() {
                 <GitCompare size={20} />
               </div>
               <div>
-                <span className="font-mono text-[10px] sm:text-xs font-semibold tracking-[0.2em] uppercase text-[#A5A79B]/80 block">
+                <span className="font-mono text-[11px] font-semibold tracking-[0.18em] uppercase text-[#A5A79B]">
                   UNIVERSAL COMPARISON ARENA
                 </span>
-                <h2 className="text-xl sm:text-2xl font-serif font-normal text-[#E8D2B5] tracking-tight">
+                <h2 className="text-2xl sm:text-3xl font-serif font-normal text-[#E8D2B5] tracking-tight drop-shadow-[0_1px_12px_rgba(232,210,181,0.12)]">
                   Head-to-Head Telemetry Deck
                 </h2>
               </div>
@@ -699,9 +709,9 @@ export default function RepoComparisonModal() {
                       key={mode}
                       type="button"
                       onClick={() => setAudienceMode(mode)}
-                      className={`px-3 py-1 rounded-lg text-xs font-mono transition-all cursor-pointer inline-flex items-center gap-1.5 ${
+                      className={`px-3 py-1 rounded-lg text-xs font-mono font-semibold transition-all cursor-pointer inline-flex items-center gap-1.5 ${
                         isActive
-                          ? 'bg-[#590907] text-[#E8D2B5] font-semibold shadow-sm border border-[#590907]'
+                          ? 'bg-[#590907] text-[#E8D2B5] shadow-sm border border-[#590907]'
                           : 'text-[#A5A79B] hover:text-[#E8D2B5]'
                       }`}
                     >
@@ -722,7 +732,7 @@ export default function RepoComparisonModal() {
             </div>
           </div>
 
-          {/* Dual Input Hub with Center Swapper */}
+          {/* Dual Input Hub with Interactive Pulse VS Swapper */}
           <div className="space-y-3 relative z-10">
             <div className="grid grid-cols-1 md:grid-cols-12 gap-3 items-center">
               {/* Contender A Input */}
@@ -738,22 +748,24 @@ export default function RepoComparisonModal() {
                 />
               </div>
 
-              {/* Contender Swap Button */}
+              {/* Interactive Pulse VS Contender Swap Button */}
               <div className="md:col-span-2 flex items-center justify-center">
                 <motion.button
                   type="button"
-                  whileHover={{ scale: 1.1 }}
-                  whileTap={{ scale: 0.95 }}
+                  whileHover={{ scale: 1.12 }}
+                  whileTap={{ scale: 0.94 }}
                   onClick={handleSwapContenders}
-                  className="w-9 h-9 rounded-full bg-[#180d0d] border border-[#590907] hover:border-[#E8D2B5] text-[#E8D2B5] flex items-center justify-center cursor-pointer shadow-lg shadow-black/50 transition-colors z-20"
-                  title="Swap contenders"
+                  className="relative w-11 h-11 rounded-full bg-[#180d0d] border border-[#590907] hover:border-[#E8D2B5] text-[#E8D2B5] flex items-center justify-center cursor-pointer shadow-lg shadow-black/60 transition-colors z-20 ring-2 ring-[#590907]/60 group"
+                  title="Swap contenders (180°)"
                   aria-label="Swap contenders"
                 >
+                  <span className="absolute -inset-1 rounded-full bg-[#590907]/30 blur-sm pointer-events-none group-hover:bg-[#590907]/60 transition-all" />
                   <motion.div
                     animate={{ rotate: isSwapped ? 180 : 0 }}
-                    transition={{ type: 'spring', stiffness: 300, damping: 20 }}
+                    transition={{ type: 'spring', stiffness: 350, damping: 22 }}
+                    className="relative flex items-center justify-center font-mono font-bold text-xs"
                   >
-                    <ArrowLeftRight size={15} />
+                    <ArrowLeftRight size={16} className="text-[#E8D2B5]" />
                   </motion.div>
                 </motion.button>
               </div>
@@ -775,7 +787,7 @@ export default function RepoComparisonModal() {
             {/* Smart Presets & Linked Cross-Audit Chip */}
             <div className="flex items-center justify-between flex-wrap gap-2 pt-1">
               <div className="flex items-center gap-1.5 flex-wrap">
-                <span className="text-[11px] font-mono text-[#A5A79B]/70 mr-1">Arena Presets:</span>
+                <span className="text-[11px] font-mono font-semibold text-[#A5A79B]/70 mr-1">Arena Presets:</span>
                 {PRESET_MATCHUPS.map((pair) => (
                   <button
                     key={pair.label}
@@ -786,7 +798,7 @@ export default function RepoComparisonModal() {
                     }}
                     className="px-2.5 py-1 rounded-lg bg-[#120909] hover:bg-[#180d0d] text-[#A5A79B] hover:text-[#E8D2B5] border border-[#A5A79B]/15 text-[11px] font-mono transition-all cursor-pointer flex items-center gap-1.5"
                   >
-                    <span>{pair.label}</span>
+                    <span className="font-medium">{pair.label}</span>
                     <span className="text-[9px] px-1 rounded bg-[#590907]/40 text-[#E8D2B5] border border-[#590907]/60">
                       {pair.typeBadge}
                     </span>
@@ -797,9 +809,9 @@ export default function RepoComparisonModal() {
               <button
                 onClick={() => handleCompare(repoAInput, repoBInput)}
                 disabled={loading || !repoAInput.trim() || !repoBInput.trim()}
-                className="px-4 py-2 rounded-xl text-xs font-mono font-semibold bg-[#590907] text-[#E8D2B5] hover:bg-[#77110f] transition-all disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer shadow-md inline-flex items-center gap-2"
+                className="px-4 py-2 rounded-xl text-xs font-mono font-bold bg-[#590907] text-[#E8D2B5] hover:bg-[#77110f] transition-all disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer shadow-md inline-flex items-center gap-2"
               >
-                <GitCompare size={13} />
+                <GitCompare size={14} />
                 <span>Execute Matchup</span>
               </button>
             </div>
@@ -809,18 +821,18 @@ export default function RepoComparisonModal() {
               <motion.div
                 initial={{ opacity: 0, y: -4 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="p-2.5 rounded-xl bg-[#590907]/20 border border-[#590907]/40 flex items-center justify-between gap-3 text-xs font-sans text-[#E8D2B5]"
+                className="p-3 rounded-xl bg-[#590907]/20 border border-[#590907]/40 flex items-center justify-between gap-3 text-xs font-sans text-[#E8D2B5]"
               >
                 <div className="flex items-center gap-2">
                   <Sparkles size={14} className="text-[#E8D2B5] shrink-0" />
                   <span>
-                    Linked GitHub source repository detected for <strong>{linkedRepoOffer.sourceUrl}</strong>: <code className="font-mono text-[#E8D2B5]">{linkedRepoOffer.repo}</code>
+                    Linked GitHub source repository detected for <strong>{linkedRepoOffer.sourceUrl}</strong>: <code className="font-mono font-bold text-[#E8D2B5]">{linkedRepoOffer.repo}</code>
                   </span>
                 </div>
                 <button
                   type="button"
                   onClick={linkedRepoOffer.action}
-                  className="px-3 py-1 rounded-lg bg-[#590907] text-[#E8D2B5] font-mono text-[11px] font-semibold hover:bg-[#77110f] transition-all shrink-0 cursor-pointer"
+                  className="px-3 py-1 rounded-lg bg-[#590907] text-[#E8D2B5] font-mono text-[11px] font-bold hover:bg-[#77110f] transition-all shrink-0 cursor-pointer shadow-sm"
                 >
                   Compare Live vs Source
                 </button>
@@ -834,11 +846,11 @@ export default function RepoComparisonModal() {
               <div className="flex items-center justify-between text-xs font-mono text-[#A5A79B]">
                 <div className="flex items-center gap-2">
                   <span className="w-2 h-2 rounded-full bg-[#E8D2B5] animate-pulse" />
-                  <span>Concurrently inspecting targets...</span>
+                  <span className="font-semibold">Concurrently inspecting targets...</span>
                 </div>
-                <span className="text-[#E8D2B5]">Syncing Telemetry Engine</span>
+                <span className="text-[#E8D2B5] font-bold">Syncing Telemetry Engine</span>
               </div>
-              <div className="h-2 w-full bg-[#120909] rounded-full overflow-hidden border border-[#A5A79B]/15">
+              <div className="h-2.5 w-full bg-[#120909] rounded-full overflow-hidden border border-[#A5A79B]/15">
                 <motion.div
                   className="h-full bg-gradient-to-r from-[#590907] via-[#E8D2B5] to-[#590907] rounded-full"
                   animate={{
@@ -852,43 +864,81 @@ export default function RepoComparisonModal() {
                   style={{ width: '50%' }}
                 />
               </div>
-              <p className="text-center font-mono text-[11px] text-[#A5A79B]/60">
+              <p className="text-center font-mono text-xs text-[#A5A79B]/70">
                 Auditing {repoAInput} vs {repoBInput}
               </p>
             </div>
           )}
 
-          {/* Error Banner */}
-          {error && !loading && (
-            <div className="p-4 rounded-xl bg-[#590907]/20 border border-[#590907] text-xs font-sans text-[#E8D2B5] flex items-center justify-between gap-3">
-              <div className="flex items-center gap-2">
-                <AlertCircle size={16} className="text-[#E8D2B5] shrink-0" />
-                <span>{error}</span>
-              </div>
-              <button
-                onClick={() => handleCompare(repoAInput, repoBInput)}
-                className="px-3 py-1 rounded-lg bg-[#590907] text-[#E8D2B5] font-mono text-xs font-semibold hover:bg-[#77110f] transition-all cursor-pointer shrink-0"
-              >
-                Retry
-              </button>
+          {/* Per-Contender Error Boundaries */}
+          {!loading && (errorA || errorB) && (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+              {errorA && (
+                <div className="p-3.5 rounded-xl bg-[#590907]/20 border border-[#590907] text-xs font-sans text-[#E8D2B5] flex items-center justify-between gap-3">
+                  <div className="flex items-center gap-2">
+                    <AlertCircle size={15} className="text-[#E8D2B5] shrink-0" />
+                    <span>Target A Error: {errorA}</span>
+                  </div>
+                  <button
+                    onClick={() => handleCompare(repoAInput, repoBInput)}
+                    className="px-2.5 py-1 rounded bg-[#590907] text-[#E8D2B5] font-mono text-[11px] font-bold hover:bg-[#77110f] transition-all cursor-pointer shrink-0"
+                  >
+                    Retry
+                  </button>
+                </div>
+              )}
+              {errorB && (
+                <div className="p-3.5 rounded-xl bg-[#590907]/20 border border-[#590907] text-xs font-sans text-[#E8D2B5] flex items-center justify-between gap-3">
+                  <div className="flex items-center gap-2">
+                    <AlertCircle size={15} className="text-[#E8D2B5] shrink-0" />
+                    <span>Target B Error: {errorB}</span>
+                  </div>
+                  <button
+                    onClick={() => handleCompare(repoAInput, repoBInput)}
+                    className="px-2.5 py-1 rounded bg-[#590907] text-[#E8D2B5] font-mono text-[11px] font-bold hover:bg-[#77110f] transition-all cursor-pointer shrink-0"
+                  >
+                    Retry
+                  </button>
+                </div>
+              )}
             </div>
           )}
 
-          {/* Main Comparison Matrix Display */}
-          {!loading && !error && targetA && targetB && (
-            <div className="space-y-6 relative z-10">
+          {/* Main Comparison Matrix Display with Staggered Framer Motion Reveal */}
+          {!loading && targetA && targetB && (
+            <motion.div
+              initial="hidden"
+              animate="visible"
+              variants={{
+                hidden: { opacity: 0 },
+                visible: {
+                  opacity: 1,
+                  transition: {
+                    staggerChildren: 0.07,
+                    delayChildren: 0.1,
+                  },
+                },
+              }}
+              className="space-y-6 relative z-10"
+            >
               {/* Comparative Executive Banner */}
-              <div className="p-4 rounded-xl bg-[#120909] border border-[#590907]/50 flex items-start gap-3">
-                <Sparkles size={16} className="text-[#E8D2B5] shrink-0 mt-0.5" />
-                <div className="space-y-0.5">
-                  <span className="font-mono text-[10px] uppercase tracking-wider text-[#E8D2B5] font-bold block">
+              <motion.div
+                variants={{
+                  hidden: { opacity: 0, y: 12 },
+                  visible: { opacity: 1, y: 0 },
+                }}
+                className="p-4 sm:p-5 rounded-2xl bg-[#120909] border border-[#590907]/50 flex items-start gap-3.5 shadow-lg"
+              >
+                <Sparkles size={18} className="text-[#E8D2B5] shrink-0 mt-0.5" />
+                <div className="space-y-1">
+                  <span className="font-mono text-[11px] uppercase tracking-wider text-[#E8D2B5] font-bold block">
                     SYNTHESIS VERDICT
                   </span>
-                  <p className="font-sans text-xs sm:text-sm text-[#E8D2B5] leading-relaxed">
+                  <p className="font-sans text-sm sm:text-[15px] font-medium text-[#E8D2B5] leading-relaxed">
                     {summaryVerdict}
                   </p>
                 </div>
-              </div>
+              </motion.div>
 
               {/* Side-by-Side Dual Contender Cards with Framer Motion Layout Transitions */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -931,7 +981,7 @@ export default function RepoComparisonModal() {
                         key={tab.id}
                         type="button"
                         onClick={() => setSelectedCategory(tab.id)}
-                        className="relative px-3.5 py-1.5 rounded-lg text-xs font-mono font-medium transition-colors cursor-pointer"
+                        className="relative px-3.5 py-1.5 rounded-lg text-xs font-mono font-semibold transition-colors cursor-pointer"
                       >
                         {isActive && (
                           <motion.div
@@ -940,7 +990,7 @@ export default function RepoComparisonModal() {
                             transition={{ type: 'spring', bounce: 0.2, duration: 0.4 }}
                           />
                         )}
-                        <span className={`relative z-10 ${isActive ? 'text-[#E8D2B5] font-semibold' : 'text-[#A5A79B] hover:text-[#E8D2B5]'}`}>
+                        <span className={`relative z-10 ${isActive ? 'text-[#E8D2B5]' : 'text-[#A5A79B] hover:text-[#E8D2B5]'}`}>
                           {tab.label}
                         </span>
                       </button>
@@ -948,16 +998,16 @@ export default function RepoComparisonModal() {
                   })}
                 </div>
 
-                <span className="text-[11px] font-mono text-[#A5A79B]/70">
+                <span className="text-xs font-mono font-semibold text-[#A5A79B]/70">
                   {filteredMetrics.length} metrics evaluated
                 </span>
               </div>
 
-              {/* Tug-of-War Comparative Telemetry Matrix */}
-              <div className="space-y-4 rounded-xl border border-[#A5A79B]/15 bg-[#120909] p-4 sm:p-5">
+              {/* Spring-Loaded Center-Outward Tug-of-War Telemetry Matrix */}
+              <div className="space-y-4 rounded-2xl border border-[#A5A79B]/15 bg-[#120909] p-4 sm:p-6 shadow-xl">
                 <div className="flex items-center justify-between border-b border-[#A5A79B]/15 pb-2.5 text-xs font-mono text-[#A5A79B]">
-                  <span className="font-semibold uppercase tracking-wider">TUG-OF-WAR BENCHMARK MATRIX</span>
-                  <span className="text-[11px] text-[#A5A79B]/60">CENTER-OUT EXPANSION</span>
+                  <span className="font-bold uppercase tracking-wider">TUG-OF-WAR BENCHMARK MATRIX</span>
+                  <span className="text-[11px] text-[#A5A79B]/60 font-medium">CENTER-OUT EXPANSION</span>
                 </div>
 
                 <div className="space-y-4">
@@ -969,13 +1019,13 @@ export default function RepoComparisonModal() {
 
               {/* Winner Badges Summary Footer */}
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-1">
-                <div className="p-3.5 rounded-xl bg-[#120909] border border-[#A5A79B]/15 flex items-center gap-3">
-                  <div className="w-8 h-8 rounded-lg bg-[#590907]/40 border border-[#590907] flex items-center justify-center shrink-0 text-[#E8D2B5]">
-                    <Zap size={15} />
+                <div className="p-4 rounded-xl bg-[#120909] border border-[#A5A79B]/15 flex items-center gap-3.5">
+                  <div className="w-9 h-9 rounded-lg bg-[#590907]/40 border border-[#590907] flex items-center justify-center shrink-0 text-[#E8D2B5]">
+                    <Zap size={16} />
                   </div>
                   <div className="min-w-0 flex-1">
-                    <span className="text-[10px] font-mono uppercase text-[#A5A79B] block">OVERALL LEADER</span>
-                    <span className="text-xs font-bold font-mono text-[#E8D2B5] truncate block">
+                    <span className="text-[10px] font-mono font-semibold uppercase text-[#A5A79B] block">OVERALL LEADER</span>
+                    <span className="text-xs sm:text-sm font-extrabold font-mono text-[#E8D2B5] truncate block">
                       {overallWinner === 'a'
                         ? targetA.type === 'repo' ? targetA.data.repo.name : targetA.data.hostname
                         : overallWinner === 'b'
@@ -985,31 +1035,31 @@ export default function RepoComparisonModal() {
                   </div>
                 </div>
 
-                <div className="p-3.5 rounded-xl bg-[#120909] border border-[#A5A79B]/15 flex items-center gap-3">
-                  <div className="w-8 h-8 rounded-lg bg-[#590907]/40 border border-[#590907] flex items-center justify-center shrink-0 text-[#E8D2B5]">
-                    <ShieldCheck size={15} />
+                <div className="p-4 rounded-xl bg-[#120909] border border-[#A5A79B]/15 flex items-center gap-3.5">
+                  <div className="w-9 h-9 rounded-lg bg-[#590907]/40 border border-[#590907] flex items-center justify-center shrink-0 text-[#E8D2B5]">
+                    <ShieldCheck size={16} />
                   </div>
                   <div className="min-w-0 flex-1">
-                    <span className="text-[10px] font-mono uppercase text-[#A5A79B] block">MATCHUP ARCHITECTURE</span>
-                    <span className="text-xs font-bold font-mono text-[#E8D2B5] truncate block capitalize">
+                    <span className="text-[10px] font-mono font-semibold uppercase text-[#A5A79B] block">MATCHUP ARCHITECTURE</span>
+                    <span className="text-xs sm:text-sm font-extrabold font-mono text-[#E8D2B5] truncate block capitalize">
                       {matchupType.replace(/-/g, ' ')}
                     </span>
                   </div>
                 </div>
 
-                <div className="p-3.5 rounded-xl bg-[#120909] border border-[#A5A79B]/15 flex items-center gap-3">
-                  <div className="w-8 h-8 rounded-lg bg-[#590907]/40 border border-[#590907] flex items-center justify-center shrink-0 text-[#E8D2B5]">
-                    <Sparkles size={15} />
+                <div className="p-4 rounded-xl bg-[#120909] border border-[#A5A79B]/15 flex items-center gap-3.5">
+                  <div className="w-9 h-9 rounded-lg bg-[#590907]/40 border border-[#590907] flex items-center justify-center shrink-0 text-[#E8D2B5]">
+                    <Sparkles size={16} />
                   </div>
                   <div className="min-w-0 flex-1">
-                    <span className="text-[10px] font-mono uppercase text-[#A5A79B] block">AUDIENCE AUDIT</span>
-                    <span className="text-xs font-bold font-mono text-[#E8D2B5] truncate block capitalize">
+                    <span className="text-[10px] font-mono font-semibold uppercase text-[#A5A79B] block">AUDIENCE AUDIT</span>
+                    <span className="text-xs sm:text-sm font-extrabold font-mono text-[#E8D2B5] truncate block capitalize">
                       {isPlain ? 'Plain English Dilemma' : 'Technical Rest Telemetry'}
                     </span>
                   </div>
                 </div>
               </div>
-            </div>
+            </motion.div>
           )}
         </motion.div>
       </div>
@@ -1048,7 +1098,7 @@ function ContenderCard({
           <motion.div
             initial={{ scale: 0.8, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
-            className="absolute top-3 right-3 inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-mono font-bold bg-[#590907] text-[#E8D2B5] border border-[#E8D2B5]/30 shadow-md"
+            className="absolute top-3 right-3 inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-mono font-extrabold bg-[#590907] text-[#E8D2B5] border border-[#E8D2B5]/30 shadow-md"
           >
             <Trophy size={11} className="text-[#E8D2B5]" />
             <span>LEADER</span>
@@ -1065,13 +1115,13 @@ function ContenderCard({
             />
           </div>
           <div className="min-w-0 flex-1">
-            <span className="text-[10px] font-mono uppercase tracking-wider text-[#A5A79B]">
+            <span className="text-[10px] font-mono font-semibold uppercase tracking-wider text-[#A5A79B]">
               {roleLabel}
             </span>
             <h3 className="text-base sm:text-lg font-serif font-normal text-[#E8D2B5] truncate">
               {repo.full_name}
             </h3>
-            <p className="text-xs text-[#A5A79B] line-clamp-2 mt-0.5 font-sans">
+            <p className="text-xs sm:text-sm font-medium text-[#A5A79B] line-clamp-2 mt-0.5 font-sans leading-relaxed">
               {repo.description || 'Public GitHub repository'}
             </p>
           </div>
@@ -1079,11 +1129,11 @@ function ContenderCard({
 
         <div className="flex items-center justify-between pt-2 border-t border-[#A5A79B]/15 text-xs font-mono">
           <span className="text-[#A5A79B]">
-            Language: <strong className="text-[#E8D2B5]">{language}</strong>
+            Language: <strong className="text-[#E8D2B5] font-bold">{language}</strong>
           </span>
           <button
             onClick={() => onInspect(repo.full_name)}
-            className="text-[#E8D2B5] hover:underline flex items-center gap-1 font-semibold cursor-pointer"
+            className="text-[#E8D2B5] hover:underline flex items-center gap-1 font-bold cursor-pointer"
           >
             <span>Inspect in Dashboard</span>
             <ArrowRight size={12} />
@@ -1108,7 +1158,7 @@ function ContenderCard({
         <motion.div
           initial={{ scale: 0.8, opacity: 0 }}
           animate={{ scale: 1, opacity: 1 }}
-          className="absolute top-3 right-3 inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-mono font-bold bg-[#590907] text-[#E8D2B5] border border-[#E8D2B5]/30 shadow-md"
+          className="absolute top-3 right-3 inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-mono font-extrabold bg-[#590907] text-[#E8D2B5] border border-[#E8D2B5]/30 shadow-md"
         >
           <Trophy size={11} className="text-[#E8D2B5]" />
           <span>LEADER</span>
@@ -1120,13 +1170,13 @@ function ContenderCard({
           <Globe size={22} />
         </div>
         <div className="min-w-0 flex-1">
-          <span className="text-[10px] font-mono uppercase tracking-wider text-[#A5A79B]">
+          <span className="text-[10px] font-mono font-semibold uppercase tracking-wider text-[#A5A79B]">
             {roleLabel} (LIVE)
           </span>
           <h3 className="text-base sm:text-lg font-serif font-normal text-[#E8D2B5] truncate">
             {data.title || data.hostname}
           </h3>
-          <p className="text-xs text-[#A5A79B] line-clamp-2 mt-0.5 font-sans">
+          <p className="text-xs sm:text-sm font-medium text-[#A5A79B] line-clamp-2 mt-0.5 font-sans leading-relaxed">
             {data.description || `Production deployment at ${data.finalUrl}`}
           </p>
         </div>
@@ -1134,9 +1184,9 @@ function ContenderCard({
 
       <div className="flex items-center justify-between pt-2 border-t border-[#A5A79B]/15 text-xs font-mono">
         <div className="flex items-center gap-2">
-          <span className="text-[#A5A79B]">TTFB: <strong className="text-[#E8D2B5]">{data.ttfbMs}ms</strong></span>
+          <span className="text-[#A5A79B]">TTFB: <strong className="text-[#E8D2B5] font-bold">{data.ttfbMs}ms</strong></span>
           {data.isHttps && (
-            <span className="inline-flex items-center gap-1 text-[10px] text-[#A5A79B]">
+            <span className="inline-flex items-center gap-1 text-[11px] text-[#A5A79B] font-medium">
               <Lock size={10} className="text-[#E8D2B5]" /> SSL
             </span>
           )}
@@ -1145,7 +1195,7 @@ function ContenderCard({
           href={data.finalUrl}
           target="_blank"
           rel="noopener noreferrer"
-          className="text-[#E8D2B5] hover:underline flex items-center gap-1 font-semibold"
+          className="text-[#E8D2B5] hover:underline flex items-center gap-1 font-bold"
         >
           <span>Visit</span>
           <ExternalLink size={12} />
@@ -1156,7 +1206,7 @@ function ContenderCard({
 }
 
 /**
- * Tug-of-War Metric Row with Opposing Progress Bars
+ * Spring-Loaded Center-Outward Tug-of-War Metric Row
  */
 function TugOfWarRow({ item }: { item: any }) {
   const Icon = item.icon;
@@ -1164,15 +1214,21 @@ function TugOfWarRow({ item }: { item: any }) {
   const pctB = Math.min(100, Math.max(6, (item.valB / (item.maxVal || 1)) * 100));
 
   return (
-    <div className="space-y-2 py-2 border-b border-[#A5A79B]/10 last:border-b-0">
+    <motion.div
+      variants={{
+        hidden: { opacity: 0, y: 10 },
+        visible: { opacity: 1, y: 0 },
+      }}
+      className="space-y-2 py-2 border-b border-[#A5A79B]/10 last:border-b-0"
+    >
       {/* Label and Plain Verdict */}
       <div className="flex items-center justify-between text-xs font-sans">
-        <span className="text-[#E8D2B5] flex items-center gap-1.5 font-medium">
+        <span className="text-[#E8D2B5] font-bold flex items-center gap-1.5">
           <Icon size={14} className="text-[#E8D2B5]" />
           <span>{item.label}</span>
         </span>
         {item.plainVerdict && (
-          <span className="text-[11px] font-sans text-[#A5A79B] truncate max-w-sm hidden sm:inline">
+          <span className="text-xs font-medium text-[#A5A79B] truncate max-w-sm hidden sm:inline">
             {item.plainVerdict}
           </span>
         )}
@@ -1181,18 +1237,18 @@ function TugOfWarRow({ item }: { item: any }) {
       {/* Opposing Metrics & Tug-of-War Dual Bars */}
       <div className="space-y-1.5">
         <div className="flex items-center justify-between text-xs font-mono">
-          <span className={`font-semibold flex items-center gap-1.5 ${item.winner === 'a' ? 'text-[#E8D2B5]' : 'text-[#A5A79B]'}`}>
+          <span className={`font-extrabold flex items-center gap-1.5 ${item.winner === 'a' ? 'text-[#E8D2B5]' : 'text-[#A5A79B]'}`}>
             <span>{item.displayA}</span>
             {item.winner === 'a' && (
-              <span className="inline-flex items-center gap-0.5 px-1.5 py-0.2 rounded text-[9px] bg-[#590907] text-[#E8D2B5] font-bold">
+              <span className="inline-flex items-center gap-0.5 px-1.5 py-0.2 rounded text-[9px] bg-[#590907] text-[#E8D2B5] font-extrabold">
                 <Trophy size={9} /> LEAD
               </span>
             )}
           </span>
 
-          <span className={`font-semibold flex items-center gap-1.5 ${item.winner === 'b' ? 'text-[#E8D2B5]' : 'text-[#A5A79B]'}`}>
+          <span className={`font-extrabold flex items-center gap-1.5 ${item.winner === 'b' ? 'text-[#E8D2B5]' : 'text-[#A5A79B]'}`}>
             {item.winner === 'b' && (
-              <span className="inline-flex items-center gap-0.5 px-1.5 py-0.2 rounded text-[9px] bg-[#590907] text-[#E8D2B5] font-bold">
+              <span className="inline-flex items-center gap-0.5 px-1.5 py-0.2 rounded text-[9px] bg-[#590907] text-[#E8D2B5] font-extrabold">
                 <Trophy size={9} /> LEAD
               </span>
             )}
@@ -1200,40 +1256,42 @@ function TugOfWarRow({ item }: { item: any }) {
           </span>
         </div>
 
-        {/* Tug-of-War Opposing Track */}
+        {/* Tug-of-War Spring-Loaded Center-Outward Track */}
         <div className="flex items-center gap-1 w-full">
-          {/* Left Bar (Contender A) expands rightwards toward center */}
+          {/* Left Bar (Contender A) expands outward to left from center (originX: 1) */}
           <div className="flex-1 flex justify-end h-2.5 bg-[#180d0d] rounded-l-full overflow-hidden border border-r-0 border-[#A5A79B]/20">
             <motion.div
-              initial={{ width: 0 }}
-              animate={{ width: `${pctA}%` }}
-              transition={{ type: 'spring', damping: 22, stiffness: 200 }}
+              initial={{ scaleX: 0 }}
+              animate={{ scaleX: 1 }}
+              transition={{ type: 'spring', damping: 22, stiffness: 220 }}
+              style={{ width: `${pctA}%`, originX: 1 }}
               className={`h-full rounded-l-full ${
                 item.winner === 'a'
-                  ? 'bg-[#E8D2B5] shadow-[0_0_10px_rgba(232,210,181,0.65)]'
+                  ? 'bg-[#E8D2B5] shadow-[0_0_12px_rgba(232,210,181,0.35)]'
                   : 'bg-[#590907]/80'
               }`}
             />
           </div>
 
-          {/* Center Tug Divider */}
+          {/* Center Zero-Axis Divider */}
           <div className="w-1.5 h-4 rounded-full bg-[#A5A79B]/40 shrink-0 shadow-sm" />
 
-          {/* Right Bar (Contender B) expands leftwards from center */}
+          {/* Right Bar (Contender B) expands outward to right from center (originX: 0) */}
           <div className="flex-1 flex justify-start h-2.5 bg-[#180d0d] rounded-r-full overflow-hidden border border-l-0 border-[#A5A79B]/20">
             <motion.div
-              initial={{ width: 0 }}
-              animate={{ width: `${pctB}%` }}
-              transition={{ type: 'spring', damping: 22, stiffness: 200 }}
+              initial={{ scaleX: 0 }}
+              animate={{ scaleX: 1 }}
+              transition={{ type: 'spring', damping: 22, stiffness: 220 }}
+              style={{ width: `${pctB}%`, originX: 0 }}
               className={`h-full rounded-r-full ${
                 item.winner === 'b'
-                  ? 'bg-[#E8D2B5] shadow-[0_0_10px_rgba(232,210,181,0.65)]'
+                  ? 'bg-[#E8D2B5] shadow-[0_0_12px_rgba(232,210,181,0.35)]'
                   : 'bg-[#590907]/80'
               }`}
             />
           </div>
         </div>
       </div>
-    </div>
+    </motion.div>
   );
 }

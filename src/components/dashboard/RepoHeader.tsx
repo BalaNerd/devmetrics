@@ -52,7 +52,7 @@ export default function RepoHeader({ repo }: RepoHeaderProps) {
           {/* Repo Info */}
           <div className="min-w-0 flex-1 space-y-1 sm:space-y-1.5">
             <div className="flex items-center gap-2 sm:gap-2.5 flex-wrap">
-              <h1 className="text-3xl sm:text-4xl font-serif font-normal text-[#E8D2B5] break-words tracking-tight leading-snug">
+              <h1 className="text-3xl sm:text-4xl font-serif font-normal text-[#E8D2B5] break-words tracking-tight leading-snug drop-shadow-[0_1px_12px_rgba(232,210,181,0.12)]">
                 <span className="text-[#A5A79B]/80">{repo.owner.login}</span>
                 <span className="text-[#590907] mx-1.5 font-mono font-light">/</span>
                 <span>{repo.name}</span>
@@ -78,15 +78,15 @@ export default function RepoHeader({ repo }: RepoHeaderProps) {
             </div>
 
             {/* Subline: Language & Recency */}
-            <div className="flex items-center gap-3 text-xs font-mono text-[#A5A79B] flex-wrap">
+            <div className="flex items-center gap-3 text-xs font-mono text-[#A5A79B] flex-wrap font-medium">
               {repo.language && (
-                <span className="flex items-center gap-1.5 text-[#E8D2B5] font-medium">
+                <span className="flex items-center gap-1.5 text-[#E8D2B5] font-bold">
                   <span className="w-2 h-2 rounded-full bg-[#E8D2B5] shadow-[0_0_6px_rgba(232,210,181,0.6)]" />
                   {repo.language}
                 </span>
               )}
               <span className="w-1 h-1 rounded-full bg-[#A5A79B]/40" />
-              <span suppressHydrationWarning>Updated {formatRelativeTime(repo.pushed_at)}</span>
+              <span suppressHydrationWarning className="font-medium">Updated {formatRelativeTime(repo.pushed_at)}</span>
             </div>
           </div>
         </div>
@@ -95,14 +95,14 @@ export default function RepoHeader({ repo }: RepoHeaderProps) {
         <div className="flex items-center gap-2 sm:gap-2.5 shrink-0 self-stretch sm:self-auto flex-wrap">
           <button
             onClick={() => setComparisonModalOpen(true)}
-            className="flex-1 sm:flex-initial inline-flex items-center justify-center gap-2 px-3.5 py-2.5 min-h-[44px] rounded-xl text-xs font-mono font-semibold bg-[#120909] hover:bg-[#180d0d] text-[#E8D2B5] border border-[#A5A79B]/25 hover:border-[#590907] transition-all duration-200 ease-out shadow-sm cursor-pointer shrink-0 active:scale-95"
+            className="flex-1 sm:flex-initial inline-flex items-center justify-center gap-2 px-3.5 py-2.5 min-h-[44px] rounded-xl text-xs font-mono font-bold bg-[#120909] hover:bg-[#180d0d] text-[#E8D2B5] border border-[#A5A79B]/25 hover:border-[#590907] transition-all duration-200 ease-out shadow-sm cursor-pointer shrink-0 active:scale-95"
           >
             <GitCompare size={13} className="text-[#E8D2B5]" />
             <span>Compare</span>
           </button>
           <button
             onClick={() => setBadgeModalOpen(true)}
-            className="flex-1 sm:flex-initial inline-flex items-center justify-center gap-2 px-3.5 py-2.5 min-h-[44px] rounded-xl text-xs font-mono font-semibold bg-[#590907] hover:bg-[#77110f] text-[#E8D2B5] border border-[#590907] transition-all duration-200 ease-out shadow-md cursor-pointer shrink-0 active:scale-95"
+            className="flex-1 sm:flex-initial inline-flex items-center justify-center gap-2 px-3.5 py-2.5 min-h-[44px] rounded-xl text-xs font-mono font-bold bg-[#590907] hover:bg-[#77110f] text-[#E8D2B5] border border-[#590907] transition-all duration-200 ease-out shadow-md cursor-pointer shrink-0 active:scale-95"
           >
             <Share2 size={13} />
             <span>Shields Badge</span>
@@ -111,7 +111,7 @@ export default function RepoHeader({ repo }: RepoHeaderProps) {
             href={`https://github.com/${repo.full_name}`}
             target="_blank"
             rel="noopener noreferrer"
-            className="flex-1 sm:flex-initial inline-flex items-center justify-center gap-2 px-3.5 py-2.5 min-h-[44px] rounded-xl text-xs font-mono bg-[#120909] text-[#A5A79B] border border-[#A5A79B]/20 hover:text-[#E8D2B5] hover:border-[#590907] transition-all duration-200 ease-out shrink-0 active:scale-95"
+            className="flex-1 sm:flex-initial inline-flex items-center justify-center gap-2 px-3.5 py-2.5 min-h-[44px] rounded-xl text-xs font-mono font-bold bg-[#120909] text-[#A5A79B] border border-[#A5A79B]/20 hover:text-[#E8D2B5] hover:border-[#590907] transition-all duration-200 ease-out shrink-0 active:scale-95"
           >
             <ExternalLink size={13} />
             <span>GitHub</span>
@@ -121,7 +121,7 @@ export default function RepoHeader({ repo }: RepoHeaderProps) {
 
       {/* Description */}
       {repo.description && (
-        <p className="font-sans text-xs sm:text-sm text-[#A5A79B] leading-relaxed break-words relative z-10">
+        <p className="font-sans text-xs sm:text-sm font-medium text-[#A5A79B] leading-relaxed break-words relative z-10">
           {repo.description}
         </p>
       )}
@@ -135,7 +135,7 @@ export default function RepoHeader({ repo }: RepoHeaderProps) {
               key={stat.label}
               className="bg-[#120909] border border-[#A5A79B]/15 rounded-xl p-3 sm:p-3.5 flex flex-col justify-between gap-1 flex-1 min-w-0"
             >
-              <span className="font-mono text-[10px] sm:text-xs font-semibold uppercase tracking-[0.15em] text-[#A5A79B]/80 flex items-center gap-1.5 truncate">
+              <span className="font-mono text-[10px] sm:text-xs font-bold uppercase tracking-[0.15em] text-[#A5A79B]/80 flex items-center gap-1.5 truncate">
                 <Icon size={12} className="text-[#A5A79B] shrink-0" />
                 <span className="truncate">{stat.label}</span>
               </span>

@@ -200,10 +200,10 @@ export default function HealthChecklist({ health, checklist, grade: customGrade 
             <ShieldCheck size={17} />
           </div>
           <div>
-            <span suppressHydrationWarning className="text-[11px] font-semibold tracking-[0.2em] uppercase text-[#A5A79B]/80 font-mono block">
+            <span suppressHydrationWarning className="text-[11px] font-bold tracking-[0.2em] uppercase text-[#A5A79B]/90 font-mono block">
               {isPlain ? 'PORTFOLIO READINESS' : 'HYGIENE, SECURITY & GOVERNANCE'}
             </span>
-            <h3 suppressHydrationWarning className="text-xl font-bold tracking-tight text-[#E8D2B5] font-sans mt-0.5">
+            <h3 suppressHydrationWarning className="text-xl sm:text-2xl font-bold tracking-tight text-[#E8D2B5] font-sans mt-0.5">
               {isPlain ? 'Portfolio Readiness Score' : 'Hygiene & Governance'}
             </h3>
           </div>
@@ -211,10 +211,10 @@ export default function HealthChecklist({ health, checklist, grade: customGrade 
 
         {/* Letter Grade Badge */}
         <div suppressHydrationWarning className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#590907]/30 border border-[#590907] shadow-sm">
-          <span className="font-mono text-base sm:text-lg font-black text-[#E8D2B5]">
+          <span className="font-mono text-base sm:text-lg font-extrabold text-[#E8D2B5]">
             GRADE {grade}
           </span>
-          <span className="text-[11px] font-mono text-[#A5A79B]">
+          <span className="text-[11px] font-mono text-[#A5A79B] font-semibold">
             ({score}%)
           </span>
         </div>

@@ -130,10 +130,10 @@ export default function VelocityScore({
             <Zap size={17} />
           </div>
           <div>
-            <span suppressHydrationWarning className="text-[11px] font-semibold tracking-[0.2em] uppercase text-[#A5A79B]/80 font-mono block">
+            <span suppressHydrationWarning className="text-[11px] font-bold tracking-[0.2em] uppercase text-[#A5A79B]/90 font-mono block">
               {isPlain ? 'PROJECT PULSE' : 'THROUGHPUT & VELOCITY CADENCE'}
             </span>
-            <h3 suppressHydrationWarning className="text-xl font-bold tracking-tight text-[#E8D2B5] font-sans mt-0.5">
+            <h3 suppressHydrationWarning className="text-xl sm:text-2xl font-bold tracking-tight text-[#E8D2B5] font-sans mt-0.5">
               {isPlain ? 'Shipping Vitality' : 'Throughput & Cadence'}
             </h3>
           </div>
@@ -285,28 +285,28 @@ export default function VelocityScore({
       </div>
 
       {/* Short Explanatory Narrative Copy */}
-      <p suppressHydrationWarning className="font-sans text-sm text-[#A5A79B] leading-relaxed pt-2 border-t border-[#A5A79B]/15 relative z-10">
+      <p suppressHydrationWarning className="font-sans text-sm sm:text-[15px] font-medium text-[#A5A79B] leading-relaxed pt-2 border-t border-[#A5A79B]/15 relative z-10">
         {isPlain ? (
           isActivePulse ? (
             <>
-              This project receives <strong className="font-semibold text-[#E8D2B5]">regular updates</strong> and is actively maintained.
+              This project receives <strong className="font-bold text-[#E8D2B5]">regular updates</strong> and is actively maintained.
             </>
           ) : (
             <>
-              This project has <strong className="font-semibold text-[#E8D2B5]">not received updates recently</strong> and is in maintenance mode.
+              This project has <strong className="font-bold text-[#E8D2B5]">not received updates recently</strong> and is in maintenance mode.
             </>
           )
         ) : daysSinceLastCommit > 60 ? (
           <>
-            Repository is in <strong className="font-semibold text-[#E8D2B5]">dormant shipping momentum</strong> with no commits over 60 days.
+            Repository is in <strong className="font-bold text-[#E8D2B5]">dormant shipping momentum</strong> with no commits over 60 days.
           </>
         ) : daysSinceLastCommit > 14 ? (
           <>
-            Development pace has tapered off over the past <strong className="font-semibold text-[#E8D2B5]">2 weeks</strong>.
+            Development pace has tapered off over the past <strong className="font-bold text-[#E8D2B5]">2 weeks</strong>.
           </>
         ) : (
           <>
-            <strong className="font-semibold text-[#E8D2B5]">Active weekly cadence</strong> sustained with steady production pushes.
+            <strong className="font-bold text-[#E8D2B5]">Active weekly cadence</strong> sustained with steady production pushes.
           </>
         )}
       </p>
