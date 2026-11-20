@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { Zap, TrendingUp, TrendingDown, Minus, Clock, Calendar, GitCommit, GitPullRequest, Activity } from 'lucide-react';
+import { Zap, TrendingUp, TrendingDown, Minus, Clock, Calendar, GitCommit, GitPullRequest, Activity, PauseCircle } from 'lucide-react';
 import type { CommitEntry, ChurnMetrics } from '@/lib/github';
 import { useAppStore } from '@/store/useAppStore';
 
@@ -149,7 +149,12 @@ export default function VelocityScore({
                 : 'bg-[#120909] text-[#A5A79B] border-[#A5A79B]/25'
             }`}
           >
-            <span>{isActivePulse ? '⚡ Active Development' : '💤 Inactive Maintenance'}</span>
+            {isActivePulse ? (
+              <Zap size={13} className="text-[#E8D2B5]" />
+            ) : (
+              <PauseCircle size={13} className="text-[#A5A79B]" />
+            )}
+            <span>{isActivePulse ? 'Active Development' : 'Inactive Maintenance'}</span>
           </div>
         ) : (
           <div suppressHydrationWarning className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-mono bg-[#120909] border border-[#A5A79B]/20 text-[#E8D2B5]">

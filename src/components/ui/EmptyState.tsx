@@ -10,6 +10,7 @@ import {
   Layers,
   Terminal,
   Globe,
+  GitBranch,
   ArrowRight,
   AlertTriangle,
   Lock,
@@ -193,7 +194,7 @@ export default function EmptyState({ type, message }: EmptyStateProps) {
                   onClick={() => handlePresetRepo(preset.value)}
                   className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-full border border-[#E3E8F2] bg-white hover:bg-[#EEF1FF] hover:border-[#D5DCFF] text-xs font-medium text-[#0C1222] transition-all"
                 >
-                  <span className="text-sm">{preset.emoji}</span>
+                  <GitBranch size={13} className="text-[#5C6A80]" />
                   <span>{preset.label}</span>
                 </button>
               ))}
@@ -210,7 +211,7 @@ export default function EmptyState({ type, message }: EmptyStateProps) {
                   onClick={() => handlePresetLive(preset.value)}
                   className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-full border border-[#E3E8F2] bg-white hover:bg-[#EEF1FF] hover:border-[#D5DCFF] text-xs font-medium text-[#0C1222] transition-all"
                 >
-                  <span className="text-sm">{preset.emoji}</span>
+                  <Globe size={13} className="text-[#5C6A80]" />
                   <span>{preset.label}</span>
                 </button>
               ))}

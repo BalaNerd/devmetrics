@@ -158,9 +158,9 @@ export default function PunchCard({
     return {
       isNightOwl,
       isWeekendHeavy,
-      primaryVerdict: isNightOwl
-        ? '🌙 Night Owl Builder: Most coding occurs between 10 PM and 2 AM.'
-        : '☀️ 9-to-5 Regular Schedule: Engineering activity concentrates during daytime business hours.',
+      primaryHeadline: isNightOwl
+        ? 'Night Owl Builder: Most coding occurs between 10 PM and 2 AM.'
+        : '9-to-5 Regular Schedule: Engineering activity concentrates during daytime business hours.',
       secondaryVerdict: isWeekendHeavy
         ? 'Consistent weekend bursts of development.'
         : 'Focused weekday engineering sprints with quiet weekends.',
@@ -236,8 +236,13 @@ export default function PunchCard({
       {isPlain && (
         <div suppressHydrationWarning className="p-4 rounded-xl bg-[#120909] border border-[#590907]/60 space-y-2 relative z-10 shadow-md">
           <div className="flex items-center gap-2">
+            {rhythmStats.isNightOwl ? (
+              <Moon size={16} className="text-[#E8D2B5] shrink-0" />
+            ) : (
+              <Sun size={16} className="text-[#E8D2B5] shrink-0" />
+            )}
             <span className="text-sm sm:text-base font-bold text-[#E8D2B5] font-sans">
-              {rhythmStats.primaryVerdict}
+              {rhythmStats.primaryHeadline}
             </span>
           </div>
           <p className="text-xs sm:text-sm text-[#A5A79B] font-sans">

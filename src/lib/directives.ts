@@ -130,11 +130,11 @@ jobs:
       snippet: `name-template: 'v$RESOLVED_VERSION'
 tag-template: 'v$RESOLVED_VERSION'
 categories:
-  - title: '🚀 Features'
+  - title: 'Features'
     labels: ['enhancement', 'feature']
-  - title: '🐛 Bug Fixes'
+  - title: 'Bug Fixes'
     labels: ['fix', 'bug']
-  - title: '🧰 Maintenance'
+  - title: 'Maintenance'
     labels: ['chore', 'dependencies']
 version-resolver:
   major: { labels: ['breaking'] }
@@ -178,7 +178,7 @@ jobs:
               issue_number: context.issue.number,
               owner: context.repo.owner,
               repo: context.repo.repo,
-              body: '✅ Ephemeral Preview Environment Deployed successfully.'
+              body: 'Ephemeral Preview Environment Deployed successfully.'
             })`,
     });
   }
@@ -382,7 +382,7 @@ jobs:
         'Add GitHub YAML Issue Forms (.github/ISSUE_TEMPLATE) with required reproduction steps and system telemetry.',
       actionFile: '.github/ISSUE_TEMPLATE/bug_report.yml',
       snippetLanguage: 'yaml',
-      snippet: `name: 🐛 Bug Report
+      snippet: `name: Bug Report
 description: File a reproducible bug report to help us resolve issues
 title: "[Bug]: "
 labels: ["bug", "triage"]

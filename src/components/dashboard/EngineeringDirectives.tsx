@@ -171,8 +171,8 @@ export default function EngineeringDirectives({
               </p>
               <div className="flex items-center justify-between pt-2 border-t border-[#A5A79B]/10 text-[11px] font-sans">
                 <span className="text-[#A5A79B]">Status:</span>
-                <span className={data?.health?.hasCICD ? 'text-[#E8D2B5] font-semibold' : 'text-[#590907] font-semibold'}>
-                  {data?.health?.hasCICD ? 'Configured ✓' : 'Action Needed'}
+                <span className={data?.health?.hasCICD ? 'text-[#E8D2B5] font-semibold inline-flex items-center gap-1' : 'text-[#590907] font-semibold'}>
+                  {data?.health?.hasCICD ? (<><Check size={12} /> Configured</>) : 'Action Needed'}
                 </span>
               </div>
             </div>
@@ -189,8 +189,8 @@ export default function EngineeringDirectives({
               </p>
               <div className="flex items-center justify-between pt-2 border-t border-[#A5A79B]/10 text-[11px] font-sans">
                 <span className="text-[#A5A79B]">Status:</span>
-                <span className={data?.health?.hasLicense ? 'text-[#E8D2B5] font-semibold' : 'text-[#590907] font-semibold'}>
-                  {data?.health?.hasLicense ? `${data.health.licenseName || 'Detected'} ✓` : 'Missing'}
+                <span className={data?.health?.hasLicense ? 'text-[#E8D2B5] font-semibold inline-flex items-center gap-1' : 'text-[#590907] font-semibold'}>
+                  {data?.health?.hasLicense ? (<><Check size={12} /> {data.health.licenseName || 'Detected'}</>) : 'Missing'}
                 </span>
               </div>
             </div>
@@ -207,8 +207,8 @@ export default function EngineeringDirectives({
               </p>
               <div className="flex items-center justify-between pt-2 border-t border-[#A5A79B]/10 text-[11px] font-sans">
                 <span className="text-[#A5A79B]">Status:</span>
-                <span className={data?.health?.hasContributing ? 'text-[#E8D2B5] font-semibold' : 'text-[#A5A79B]'}>
-                  {data?.health?.hasContributing ? 'Present ✓' : 'Recommended'}
+                <span className={data?.health?.hasContributing ? 'text-[#E8D2B5] font-semibold inline-flex items-center gap-1' : 'text-[#A5A79B]'}>
+                  {data?.health?.hasContributing ? (<><Check size={12} /> Present</>) : 'Recommended'}
                 </span>
               </div>
             </div>

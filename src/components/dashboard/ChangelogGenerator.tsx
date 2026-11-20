@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { Sparkles, Copy, Check, Download, ChevronDown, ChevronUp } from 'lucide-react';
+import { Sparkles, Copy, Check, Download, ChevronDown, ChevronUp, Rocket, Bug, ChevronRight } from 'lucide-react';
 import type { CommitEntry, Release } from '@/lib/github';
 import { useAppStore } from '@/store/useAppStore';
 
@@ -51,15 +51,15 @@ Project: [${repoName}](https://github.com/${repoName})
 
 ${
   features.length > 0
-    ? `### 🚀 Features & Enhancements\n${features.slice(0, 8).map((f) => `- ${f}`).join('\n')}\n\n`
+    ? `### Features & Enhancements\n${features.slice(0, 8).map((f) => `- ${f}`).join('\n')}\n\n`
     : ''
 }${
   fixes.length > 0
-    ? `### 🐛 Bug Fixes & Stability\n${fixes.slice(0, 8).map((f) => `- ${f}`).join('\n')}\n\n`
+    ? `### Bug Fixes & Stability\n${fixes.slice(0, 8).map((f) => `- ${f}`).join('\n')}\n\n`
     : ''
 }${
   performance.length > 0
-    ? `### ⚡ Performance & Refactoring\n${performance.slice(0, 8).map((p) => `- ${p}`).join('\n')}\n\n`
+    ? `### Performance & Refactoring\n${performance.slice(0, 8).map((p) => `- ${p}`).join('\n')}\n\n`
     : ''
 }Generated automatically by DevMetrics`;
 
@@ -172,12 +172,12 @@ ${
             {features.length > 0 && (
               <div className="p-4 sm:p-5 rounded-2xl bg-[#F7F8FC] border border-[#5C6A80]/20">
                 <p className="text-xs sm:text-sm font-mono font-semibold text-[#0C1222] flex items-center gap-2 mb-3">
-                  <span>🚀</span> Features & Enhancements ({features.length})
+                  <Rocket size={14} className="text-[#0C1222]" /> Features & Enhancements ({features.length})
                 </p>
                 <ul className="space-y-2 text-xs sm:text-sm font-mono text-[#5C6A80]">
                   {(isExpanded ? features : features.slice(0, 3)).map((f, i) => (
                     <li key={i} className="flex items-start gap-2.5">
-                      <span className="text-[#0C1222] font-bold">›</span>
+                      <ChevronRight size={13} className="text-[#0C1222] shrink-0 mt-0.5" />
                       <span>{f}</span>
                     </li>
                   ))}
@@ -188,12 +188,12 @@ ${
             {fixes.length > 0 && (
               <div className="p-4 sm:p-5 rounded-2xl bg-[#F7F8FC] border border-[#5C6A80]/20">
                 <p className="text-xs sm:text-sm font-mono font-semibold text-[#0C1222] flex items-center gap-2 mb-3">
-                  <span>🐛</span> Bug Fixes & Stability ({fixes.length})
+                  <Bug size={14} className="text-[#0C1222]" /> Bug Fixes & Stability ({fixes.length})
                 </p>
                 <ul className="space-y-2 text-xs sm:text-sm font-mono text-[#5C6A80]">
                   {(isExpanded ? fixes : fixes.slice(0, 3)).map((f, i) => (
                     <li key={i} className="flex items-start gap-2.5">
-                      <span className="text-[#0C1222] font-bold">›</span>
+                      <ChevronRight size={13} className="text-[#0C1222] shrink-0 mt-0.5" />
                       <span>{f}</span>
                     </li>
                   ))}

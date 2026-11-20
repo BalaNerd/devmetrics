@@ -1,17 +1,17 @@
 // App constants
 
 export const PRESET_REPOS = [
-  { label: 'facebook/react', value: 'facebook/react', emoji: '⚛️' },
-  { label: 'vercel/next.js', value: 'vercel/next.js', emoji: '▲' },
-  { label: 'shadcn/ui', value: 'shadcn-ui/ui', emoji: '🎨' },
-  { label: 'tailwindlabs/tailwindcss', value: 'tailwindlabs/tailwindcss', emoji: '🌊' },
-  { label: 'microsoft/typescript', value: 'microsoft/TypeScript', emoji: '𝑇' },
-  { label: 'vitejs/vite', value: 'vitejs/vite', emoji: '⚡' },
+  { label: 'facebook/react', value: 'facebook/react' },
+  { label: 'vercel/next.js', value: 'vercel/next.js' },
+  { label: 'shadcn/ui', value: 'shadcn-ui/ui' },
+  { label: 'tailwindlabs/tailwindcss', value: 'tailwindlabs/tailwindcss' },
+  { label: 'microsoft/typescript', value: 'microsoft/TypeScript' },
+  { label: 'vitejs/vite', value: 'vitejs/vite' },
 ] as const;
 
 export const PRESET_LIVE_URLS = [
-  { label: 'devmetrics.vercel.app', value: 'https://devmetrics.vercel.app', emoji: '▲', desc: 'Live Production' },
-  { label: 'linear.app', value: 'https://linear.app', emoji: '📐', desc: 'Issue Tracking Platform' },
+  { label: 'devmetrics.vercel.app', value: 'https://devmetrics.vercel.app', desc: 'Live Production' },
+  { label: 'linear.app', value: 'https://linear.app', desc: 'Issue Tracking Platform' },
 ] as const;
 
 export const DAYS_OF_WEEK = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];

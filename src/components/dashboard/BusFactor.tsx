@@ -143,13 +143,19 @@ export default function BusFactor({
           </div>
           <p className="font-sans text-sm sm:text-base text-[#E8D2B5] font-medium leading-relaxed">
             {isSolo ? (
-              <>
-                <strong>👤 Solo Builder</strong>: {topPct}% of this codebase is written by one person. Low collaboration, high autonomy.
-              </>
+              <span className="inline-flex items-center gap-1.5 flex-wrap">
+                <span className="inline-flex items-center gap-1.5 font-bold text-[#E8D2B5]">
+                  <User size={15} className="text-[#E8D2B5]" /> Solo Builder:
+                </span>
+                <span>{topPct}% of this codebase is written by one person. Low collaboration, high autonomy.</span>
+              </span>
             ) : (
-              <>
-                <strong>👥 Distributed Team</strong>: Work is balanced across multiple contributors. High operational resilience.
-              </>
+              <span className="inline-flex items-center gap-1.5 flex-wrap">
+                <span className="inline-flex items-center gap-1.5 font-bold text-[#E8D2B5]">
+                  <Users size={15} className="text-[#E8D2B5]" /> Distributed Team:
+                </span>
+                <span>Work is balanced across multiple contributors. High operational resilience.</span>
+              </span>
             )}
           </p>
         </div>

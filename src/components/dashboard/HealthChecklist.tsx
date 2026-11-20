@@ -243,12 +243,12 @@ export default function HealthChecklist({ health, checklist, grade: customGrade 
           >
             <div className="flex items-center gap-2.5 min-w-0 flex-1 mr-2">
               {item.passed ? (
-                <div className="w-5 h-5 rounded-md bg-[#590907]/50 border border-[#590907] flex items-center justify-center shrink-0">
-                  <Check size={12} className="text-[#E8D2B5]" strokeWidth={2.5} />
+                <div className="w-5 h-5 rounded-md bg-[#590907]/30 border border-[#590907]/60 flex items-center justify-center shrink-0">
+                  <Check size={13} className="text-[#E8D2B5]" />
                 </div>
               ) : (
-                <div className="w-5 h-5 rounded-md bg-[#180d0d] border border-[#A5A79B]/20 flex items-center justify-center shrink-0">
-                  <X size={11} className="text-[#A5A79B]/40" strokeWidth={2} />
+                <div className="w-5 h-5 rounded-md bg-[#120909] border border-[#A5A79B]/15 flex items-center justify-center shrink-0">
+                  <X size={13} className="text-[#A5A79B]/50" />
                 </div>
               )}
 

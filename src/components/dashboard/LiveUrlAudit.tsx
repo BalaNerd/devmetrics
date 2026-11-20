@@ -423,7 +423,7 @@ export default function LiveUrlAudit() {
           <ul className="space-y-1.5 text-xs sm:text-sm font-sans text-[#E8D2B5] leading-relaxed">
             {plainEnglishReview.map((rev, i) => (
               <li key={i} className="flex items-start gap-2">
-                <span className="text-[#590907] font-bold">•</span>
+                <span className="w-1.5 h-1.5 rounded-full bg-[#590907] shrink-0 mt-2" />
                 <span>{rev}</span>
               </li>
             ))}

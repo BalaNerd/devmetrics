@@ -85,7 +85,7 @@ export default function RepoHeader({ repo }: RepoHeaderProps) {
                   {repo.language}
                 </span>
               )}
-              <span className="text-[#A5A79B]/40">•</span>
+              <span className="w-1 h-1 rounded-full bg-[#A5A79B]/40" />
               <span suppressHydrationWarning>Updated {formatRelativeTime(repo.pushed_at)}</span>
             </div>
           </div>

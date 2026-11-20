@@ -127,7 +127,7 @@ export default function DependencyAuditor({
           {isPlain ? (
             <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-sans font-bold bg-[#590907]/30 border border-[#590907] text-[#E8D2B5]">
               <ShieldCheck size={13} className="text-[#E8D2B5]" />
-              🛡️ Safe Dependencies
+              Safe Dependencies
             </span>
           ) : (
             <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-mono bg-[#120909] border border-[#A5A79B]/20 text-[#E8D2B5]">
@@ -147,7 +147,7 @@ export default function DependencyAuditor({
             </div>
             <div className="space-y-1">
               <h4 className="text-sm sm:text-base font-bold text-[#E8D2B5] font-sans">
-                🛡️ Safe Dependencies: Standard, verified open-source libraries detected. No commercial license risks.
+                Safe Dependencies: Standard, verified open-source libraries detected. No commercial license risks.
               </h4>
               <p className="text-xs sm:text-sm text-[#A5A79B] font-sans leading-relaxed">
                 The packages and libraries used in this project are verified against known major vulnerabilities. No restrictive copyleft licenses detected that would endanger commercial deployment.
@@ -174,7 +174,7 @@ export default function DependencyAuditor({
                 Testing Harness
               </span>
               <p className="text-sm font-bold text-[#E8D2B5] font-sans">
-                {hasTestRunner ? 'Automated Test Runner ✓' : 'Basic Test Harness'}
+                {hasTestRunner ? 'Automated Test Runner' : 'Basic Test Harness'}
               </p>
               <p className="text-[11px] text-[#A5A79B] font-sans">
                 {hasTestRunner ? 'Unit testing libraries active' : 'Recommended: Add Vitest or Jest'}
@@ -186,7 +186,7 @@ export default function DependencyAuditor({
                 Package Bloat
               </span>
               <p className="text-sm font-bold text-[#E8D2B5] font-sans">
-                {bloatRisk ? 'Heavy Dependency Tree' : 'Lean & Maintainable ✓'}
+                {bloatRisk ? 'Heavy Dependency Tree' : 'Lean & Maintainable'}
               </p>
               <p className="text-[11px] text-[#A5A79B] font-sans">
                 {bloatRisk ? `${prodDeps.length} runtime packages` : 'Optimized lightweight bundle'}
@@ -277,8 +277,9 @@ export default function DependencyAuditor({
               </div>
 
               {heavyProdDeps.length > 0 && activeTab === 'prod' && (
-                <span className="text-[11px] font-mono text-[#590907] bg-[#590907]/20 border border-[#590907] px-2 py-0.5 rounded">
-                  ⚠️ Heavy Bundle Alert: {heavyProdDeps.length} packages flagged
+                <span className="inline-flex items-center gap-1.5 text-[11px] font-mono text-[#E8D2B5] bg-[#590907]/30 border border-[#590907] px-2 py-0.5 rounded">
+                  <AlertTriangle size={12} className="text-[#E8D2B5]" />
+                  <span>Heavy Bundle Alert: {heavyProdDeps.length} packages flagged</span>
                 </span>
               )}
             </div>

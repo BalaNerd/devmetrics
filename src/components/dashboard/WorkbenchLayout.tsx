@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { Terminal, Clock, Package, DollarSign, Briefcase, Flame, Timer } from 'lucide-react';
+import { Terminal, Activity, ShieldCheck, Cpu, Briefcase, Flame, Timer } from 'lucide-react';
 import type { RepoData } from '@/lib/github';
 import EngineeringDirectives from './EngineeringDirectives';
 import PunchCard from './PunchCard';
@@ -28,13 +28,13 @@ export interface WorkbenchLayoutProps {
 }
 
 const WORKBENCH_TABS = [
-  { id: 'directives' as const, label: '⚡ Directives & Fixes', shortLabel: 'Directives', icon: Terminal },
-  { id: 'cadence' as const, label: '📅 7×24 Activity Cadence', shortLabel: '7×24 Cadence', icon: Clock },
-  { id: 'dependencies' as const, label: '📦 Dependency & Security', shortLabel: 'Dependencies', icon: Package },
-  { id: 'recruiter' as const, label: '💼 Resume & Recruiter Brief', shortLabel: 'Resume Bullets', icon: Briefcase },
-  { id: 'cost' as const, label: '💵 Cloud Cost Estimator', shortLabel: 'Cost Estimator', icon: DollarSign },
-  { id: 'turnaround' as const, label: '⏱️ Turnaround & PR Response', shortLabel: 'Turnaround SLA', icon: Timer },
-  { id: 'burnout' as const, label: '🔥 Burnout Simulator', shortLabel: 'Burnout Sim', icon: Flame },
+  { id: 'directives' as const, label: 'Directives & Fixes', shortLabel: 'Directives', icon: Terminal },
+  { id: 'cadence' as const, label: '7×24 Activity Cadence', shortLabel: '7×24 Cadence', icon: Activity },
+  { id: 'dependencies' as const, label: 'Dependency & Security Audit', shortLabel: 'Dependencies', icon: ShieldCheck },
+  { id: 'recruiter' as const, label: 'Resume & Recruiter Brief', shortLabel: 'Resume Bullets', icon: Briefcase },
+  { id: 'cost' as const, label: 'Cloud Cost Estimator', shortLabel: 'Cost Estimator', icon: Cpu },
+  { id: 'turnaround' as const, label: 'Turnaround & PR Response', shortLabel: 'Turnaround SLA', icon: Timer },
+  { id: 'burnout' as const, label: 'Burnout Simulator', shortLabel: 'Burnout Sim', icon: Flame },
 ];
 
 export default function WorkbenchLayout({
@@ -61,6 +61,7 @@ export default function WorkbenchLayout({
         <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar w-full p-1 bg-[#120909] rounded-xl border border-[#A5A79B]/15">
           {WORKBENCH_TABS.map((tab) => {
             const isTabActive = activeTab === tab.id;
+            const Icon = tab.icon;
 
             return (
               <button
@@ -76,6 +77,7 @@ export default function WorkbenchLayout({
                   }
                 `}
               >
+                <Icon size={14} className={isTabActive ? 'text-[#E8D2B5]' : 'text-[#A5A79B]'} />
                 <span className="hidden sm:inline">{tab.label}</span>
                 <span className="inline sm:hidden">{tab.shortLabel}</span>
               </button>

@@ -125,8 +125,9 @@ export default function CommandCockpit() {
       
       {/* A. Hero Command Bar & Mode Pill */}
       <div className="w-full text-center space-y-3">
-        <span className="text-[11px] font-mono uppercase tracking-[0.25em] text-[#A5A79B]/80 block text-center mb-3">
-          // DEV_METRICS TELEMETRY DISPATCH v1.0
+        <span className="text-[11px] font-mono uppercase tracking-[0.25em] text-[#A5A79B]/80 flex items-center justify-center gap-2 mb-3">
+          <span className="w-1.5 h-1.5 rounded-full bg-[#590907]" />
+          DEV_METRICS TELEMETRY DISPATCH v1.0
         </span>
 
         <h1 className="text-3xl sm:text-4xl md:text-5xl font-extrabold tracking-tight text-[#E8D2B5] font-sans text-center max-w-3xl mx-auto leading-[1.12]">
@@ -282,12 +283,12 @@ export default function CommandCockpit() {
             <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
             <span>GitHub REST Engine Active (5,000 req/hr cached)</span>
           </div>
-          <span className="hidden sm:inline text-[#A5A79B]/30">•</span>
+          <span className="hidden sm:inline w-1 h-1 rounded-full bg-[#A5A79B]/30" />
           <div className="flex items-center gap-2">
             <span className="w-1.5 h-1.5 rounded-full bg-[#E8D2B5]" />
             <span>Google PageSpeed Core Vitals Ready</span>
           </div>
-          <span className="hidden sm:inline text-[#A5A79B]/30">•</span>
+          <span className="hidden sm:inline w-1 h-1 rounded-full bg-[#A5A79B]/30" />
           <div className="flex items-center gap-2">
             <span className="w-1.5 h-1.5 rounded-full bg-[#590907]" />
             <span>Edge Cache Hit Ratio: 99.4%</span>

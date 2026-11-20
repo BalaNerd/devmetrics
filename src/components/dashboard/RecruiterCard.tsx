@@ -39,7 +39,7 @@ export default function RecruiterCard({ data, embedded = false }: RecruiterCardP
   ];
 
   const activeBullets = isPlain ? plainBullets : technicalBullets;
-  const fullText = activeBullets.map((b) => `• ${b}`).join('\n');
+  const fullText = activeBullets.map((b) => `- ${b}`).join('\n');
 
   const handleCopy = () => {
     navigator.clipboard.writeText(fullText);

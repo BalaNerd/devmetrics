@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Sparkles, Activity, Users, ShieldCheck } from 'lucide-react';
+import { Sparkles, Activity, Users, ShieldCheck, Code2, FileText } from 'lucide-react';
 import type { RepoData } from '@/lib/github';
 import { calculateHealthGrade, formatRelativeTime } from '@/lib/metrics';
 import { useAppStore, type AudienceMode } from '@/store/useAppStore';
@@ -65,13 +65,18 @@ export default function HumanReadableSummary({ data }: HumanReadableSummaryProps
                 key={mode}
                 type="button"
                 onClick={() => setAudienceMode(mode)}
-                className={`flex-1 sm:flex-initial min-h-[38px] px-3.5 py-1.5 rounded-lg text-xs font-mono font-medium transition-all duration-200 ease-out cursor-pointer ${
+                className={`flex-1 sm:flex-initial min-h-[38px] px-3.5 py-1.5 rounded-lg text-xs font-mono font-medium transition-all duration-200 ease-out cursor-pointer inline-flex items-center justify-center gap-1.5 ${
                   isActive
                     ? 'bg-[#590907] text-[#E8D2B5] font-semibold shadow-md shadow-black/40 border border-[#590907]'
                     : 'text-[#A5A79B] hover:text-[#E8D2B5]'
                 }`}
               >
-                {mode === 'technical' ? 'Technical Mode' : '✦ Plain English Mode'}
+                {mode === 'technical' ? (
+                  <Code2 size={13} className={isActive ? 'text-[#E8D2B5]' : 'text-[#A5A79B]'} />
+                ) : (
+                  <FileText size={13} className={isActive ? 'text-[#E8D2B5]' : 'text-[#A5A79B]'} />
+                )}
+                <span>{mode === 'technical' ? 'Technical Mode' : 'Plain English Mode'}</span>
               </button>
             );
           })}

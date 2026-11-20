@@ -270,39 +270,39 @@ export function buildPlainEnglishReview(
   // Speed
   if (ttfbMs < 300) {
     reviews.push(
-      `⚡ Lightning Edge Latency: The server responded in just ${ttfbMs}ms with optimal First Contentful Paint (${metrics.fcp}).`
+      `Lightning Edge Latency: The server responded in just ${ttfbMs}ms with optimal First Contentful Paint (${metrics.fcp}).`
     );
   } else if (ttfbMs < 750) {
     reviews.push(
-      `⏱️ Responsive Load Time: Server response clocked at ${ttfbMs}ms with clean desktop render speed.`
+      `Responsive Load Time: Server response clocked at ${ttfbMs}ms with clean desktop render speed.`
     );
   } else {
     reviews.push(
-      `⏳ High Server Latency: Initial response took ${ttfbMs}ms; recommend adding a global edge CDN or cache layer.`
+      `High Server Latency: Initial response took ${ttfbMs}ms; recommend adding a global edge CDN or cache layer.`
     );
   }
 
   // Tech stack
   const stackNames = techStack.map((s) => s.name).join(', ');
   if (stackNames) {
-    reviews.push(`🛠️ Modern Architecture: Built on ${stackNames} for responsive styling and fast hydration.`);
+    reviews.push(`Modern Architecture: Built on ${stackNames} for responsive styling and fast hydration.`);
   }
 
   // Quality & Accessibility
   if (metrics.accessibility >= 90) {
     reviews.push(
-      `♿ High Accessibility (${metrics.accessibility}/100): Clear navigation hierarchy and semantic structure verified.`
+      `High Accessibility (${metrics.accessibility}/100): Clear navigation hierarchy and semantic structure verified.`
     );
   } else {
     reviews.push(
-      `⚠️ Accessibility Needs Polish (${metrics.accessibility}/100): Some elements may lack high-contrast labels or aria tags.`
+      `Accessibility Needs Polish (${metrics.accessibility}/100): Some elements may lack high-contrast labels or aria tags.`
     );
   }
 
   // Linked Source
   if (discoveredRepo) {
     reviews.push(
-      `🔗 Connected Source Code: Automatically identified public repository at github.com/${discoveredRepo}.`
+      `Connected Source Code: Automatically identified public repository at github.com/${discoveredRepo}.`
     );
   }
 

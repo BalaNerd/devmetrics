@@ -1,6 +1,6 @@
 'use client';
 
-import { Scale, CheckCircle2, ShieldCheck, XCircle, AlertTriangle } from 'lucide-react';
+import { Scale, CheckCircle2, ShieldCheck, XCircle, AlertTriangle, Check, X } from 'lucide-react';
 import { useAppStore } from '@/store/useAppStore';
 
 interface LicenseScannerProps {
@@ -101,9 +101,13 @@ export default function LicenseScanner({ license, embedded = false }: LicenseSca
             className="flex-1 min-w-[170px] sm:min-w-[200px] p-3 rounded-xl bg-[#180d0d] border border-[#A5A79B]/15 flex items-start gap-2.5"
           >
             {p.allowed ? (
-              <CheckCircle2 size={15} className="text-[#E8D2B5] shrink-0 mt-0.5" />
+              <div className="w-5 h-5 rounded-md bg-[#590907]/30 border border-[#590907]/60 flex items-center justify-center shrink-0 mt-0.5">
+                <Check size={13} className="text-[#E8D2B5]" />
+              </div>
             ) : (
-              <XCircle size={15} className="text-[#590907] shrink-0 mt-0.5" />
+              <div className="w-5 h-5 rounded-md bg-[#120909] border border-[#A5A79B]/15 flex items-center justify-center shrink-0 mt-0.5">
+                <X size={13} className="text-[#A5A79B]/50" />
+              </div>
             )}
             <div>
               <p className="text-xs font-semibold text-[#E8D2B5] font-sans">

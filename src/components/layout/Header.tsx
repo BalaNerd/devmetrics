@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
-import { Search, GitCompare, Download, ChevronDown, FileText, Printer, Zap, Loader2 } from 'lucide-react';
+import { Search, GitCompare, Download, ChevronDown, FileText, Printer, Zap, Loader2, Code2 } from 'lucide-react';
 import { useAppStore } from '@/store/useAppStore';
 import { downloadAuditMarkdown, printAuditReport } from '@/lib/exportAudit';
 
@@ -151,13 +151,18 @@ export default function Header() {
                   key={mode}
                   type="button"
                   onClick={() => setAudienceMode(mode)}
-                  className={`px-3.5 py-1.5 rounded-full text-xs font-mono transition-all duration-200 cursor-pointer ${
+                  className={`inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-mono transition-all duration-200 cursor-pointer ${
                     isActive
                       ? 'bg-[#590907] text-[#E8D2B5] font-semibold shadow-sm border border-[#590907]'
                       : 'text-[#A5A79B] hover:text-[#E8D2B5]'
                   }`}
                 >
-                  {mode === 'technical' ? 'Technical Mode' : '✦ Plain English Mode'}
+                  {mode === 'technical' ? (
+                    <Code2 size={13} className={isActive ? 'text-[#E8D2B5]' : 'text-[#A5A79B]'} />
+                  ) : (
+                    <FileText size={13} className={isActive ? 'text-[#E8D2B5]' : 'text-[#A5A79B]'} />
+                  )}
+                  <span>{mode === 'technical' ? 'Technical Mode' : 'Plain English Mode'}</span>
                 </button>
               );
             })}

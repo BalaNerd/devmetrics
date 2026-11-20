@@ -134,7 +134,7 @@ export default function ResponseTimeTracker({
             <div className="flex items-center gap-2">
               <Zap size={16} className="text-[#E8D2B5]" />
               <h4 className="text-sm sm:text-base font-bold text-[#E8D2B5] font-sans">
-                ⚡ Fast Maintainer Response: Issues and questions are answered within 24 hours.
+                Fast Maintainer Response: Issues and questions are answered within 24 hours.
               </h4>
             </div>
             <p className="text-xs sm:text-sm text-[#A5A79B] font-sans leading-relaxed">

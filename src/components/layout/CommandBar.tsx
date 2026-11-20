@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Search, X, ArrowRight, Zap, Clock, Star, Trash2, Loader2, Globe } from 'lucide-react';
+import { Search, X, ArrowRight, Zap, Clock, Star, Trash2, Loader2, Globe, GitBranch } from 'lucide-react';
 import { useAppStore } from '@/store/useAppStore';
 import { useRepo } from '@/hooks/useRepo';
 import { useLiveAudit } from '@/hooks/useLiveAudit';
@@ -269,7 +269,7 @@ export default function CommandBar() {
                           onClick={() => handleSubmit(preset.value)}
                           className="group flex items-center gap-2 px-3 py-2 rounded-xl border border-[#5C6A80]/15 bg-[#F7F8FC]/40 hover:border-[#3D4FE0] hover:bg-[#EEF1FF] transition-all text-left"
                         >
-                          <span className="text-base w-5 text-center shrink-0">{preset.emoji}</span>
+                          <GitBranch size={13} className="text-[#5C6A80] group-hover:text-[#0C1222] shrink-0" />
                           <span className="text-xs font-mono text-[#0C1222] flex-1 truncate">
                             {preset.label}
                           </span>
@@ -294,7 +294,7 @@ export default function CommandBar() {
                           onClick={() => handleSubmit(preset.value)}
                           className="group flex items-center gap-2 px-3 py-2 rounded-xl border border-[#5C6A80]/15 bg-[#F7F8FC]/40 hover:border-[#3D4FE0] hover:bg-[#EEF1FF] transition-all text-left"
                         >
-                          <span className="text-base w-5 text-center shrink-0">{preset.emoji}</span>
+                          <Globe size={13} className="text-[#5C6A80] group-hover:text-[#0C1222] shrink-0" />
                           <div className="flex-1 min-w-0">
                             <p className="text-xs font-mono text-[#0C1222] truncate">
                               {preset.label}
