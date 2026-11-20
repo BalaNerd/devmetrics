@@ -105,10 +105,13 @@ export default function PunchCard({
 
   const [selectedRange, setSelectedRange] = useState<TimeRange>('90d');
   const [hoveredCell, setHoveredCell] = useState<{
-    dayName: string;
+    day: string;
     hour: number;
+    hourLabel: string;
     count: number;
   } | null>(null);
+
+  const activeCell = hoveredCell;
 
   const activeWeeks = RANGE_OPTIONS.find((r) => r.id === selectedRange)?.weeks ?? 12;
 
@@ -125,6 +128,11 @@ export default function PunchCard({
   const maxCount = useMemo(() => {
     return Math.max(...punchData.map((d) => d.count), 1);
   }, [punchData]);
+
+  const peakRate = useMemo(() => {
+    if (!maxCount || maxCount <= 0) return '0.0';
+    return (maxCount / (activeWeeks || 1)).toFixed(1);
+  }, [maxCount, activeWeeks]);
 
   const totalCommitsInRange = useMemo(() => {
     return punchData.reduce((acc, curr) => acc + curr.count, 0);
@@ -195,8 +203,8 @@ export default function PunchCard({
 
   return (
     <div className={containerClasses}>
-      {/* Subheader */}
-      <div className="flex items-center justify-between flex-wrap gap-3 pb-2 border-b border-[#A5A79B]/15">
+      {/* Subheader with Locked Inspector HUD Pill */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-[#A5A79B]/15">
         <div className="flex items-center gap-3">
           <div className="w-9 h-9 rounded-xl bg-[#590907]/30 border border-[#590907] text-[#E8D2B5] flex items-center justify-center shrink-0">
             <Clock size={17} />
@@ -211,59 +219,41 @@ export default function PunchCard({
           </div>
         </div>
 
-        {/* Live Hover Tooltip / Status readout */}
-        <div suppressHydrationWarning className="h-8 px-3 rounded-xl bg-[#120909] border border-[#A5A79B]/20 flex items-center text-xs font-sans text-[#E8D2B5] shadow-sm">
-          {hoveredCell ? (
-            <span>
-              <strong className="text-[#E8D2B5] font-semibold">{hoveredCell.dayName}</strong> at{' '}
-              <strong className="text-[#E8D2B5] font-semibold">{formatHourString(hoveredCell.hour)}</strong>:{' '}
-              <span className="font-mono font-bold text-[#E8D2B5]">{hoveredCell.count}</span> commits
-              {!isPlain && (
-                <span className="text-[#A5A79B] ml-1.5 font-mono text-[11px]">
-                  ({(hoveredCell.count / (maxCount || 1) * 2.4).toFixed(1)} commits/hr peak)
-                </span>
-              )}
-            </span>
-          ) : (
-            <span className="text-[#A5A79B]">
-              Total <strong className="text-[#E8D2B5] font-mono">{totalCommitsInRange.toLocaleString()}</strong> commits tracked
-            </span>
-          )}
+        {/* Locked Inspector HUD Pill (Zero Wrapping Shifts) */}
+        <div className="h-9 px-3.5 rounded-lg bg-[#120909] border border-[#A5A79B]/20 inline-flex items-center gap-2 font-mono text-xs text-[#E8D2B5] whitespace-nowrap overflow-hidden shrink-0 self-start sm:self-auto max-w-full">
+          <span className="w-1.5 h-1.5 rounded-full bg-[#590907] shrink-0" />
+          <span className="truncate tabular-nums">
+            {activeCell
+              ? `${activeCell.day} at ${activeCell.hourLabel}: ${activeCell.count} commits (${peakRate} commits/hr peak)`
+              : `Hover any cell to inspect commit cadence (${peakRate} commits/hr peak)`}
+          </span>
         </div>
       </div>
 
       {/* PLAIN ENGLISH MODE: Work-Rhythm Verdict Card */}
       {isPlain && (
-        <div suppressHydrationWarning className="p-4 rounded-xl bg-[#120909] border border-[#590907]/60 space-y-2 relative z-10 shadow-md">
+        <div suppressHydrationWarning className="p-4 rounded-xl bg-[#120909] border border-[#590907]/60 space-y-1.5 relative z-10 shadow-md min-h-[76px] flex flex-col justify-center">
           <div className="flex items-center gap-2">
             {rhythmStats.isNightOwl ? (
               <Moon size={16} className="text-[#E8D2B5] shrink-0" />
             ) : (
               <Sun size={16} className="text-[#E8D2B5] shrink-0" />
             )}
-            <span className="text-sm sm:text-base font-bold text-[#E8D2B5] font-sans">
+            <span className="text-sm sm:text-base font-bold text-[#E8D2B5] font-sans truncate">
               {rhythmStats.primaryHeadline}
             </span>
           </div>
-          <p className="text-xs sm:text-sm text-[#A5A79B] font-sans">
+          <p className="text-xs sm:text-sm text-[#A5A79B] font-sans truncate">
             {rhythmStats.secondaryVerdict}
           </p>
         </div>
       )}
 
-      {/* Sparse Commit Activity Fallback Notice */}
-      {(totalCommitsInRange < 15 || !commitActivity || commitActivity.length === 0) && (commits?.length || 0) > 0 && (
-        <div className="px-3.5 py-2 rounded-xl bg-[#590907]/20 border border-[#590907]/40 text-xs font-sans text-[#E8D2B5] flex items-center gap-2">
-          <span className="w-1.5 h-1.5 rounded-full bg-[#E8D2B5] animate-pulse shrink-0" />
-          <span>Commit data clustered in recent weeks; showing available activity.</span>
-        </div>
-      )}
-
-      {/* 7-day (Mon–Sun) × 24-hour Matrix: wrapped in overflow-x-auto for smooth horizontal scrolling */}
+      {/* 7-day (Mon–Sun) × 24-hour Matrix: Locked Fixed Vertical Height */}
       <div className="overflow-x-auto pb-2 -mx-2 px-2 w-full">
-        <div className="min-w-[620px] w-full">
+        <div className="min-w-[620px] w-full flex flex-col justify-between h-[310px] sm:h-[330px]">
           {/* Hour Labels on top */}
-          <div className="flex items-center gap-1.5 mb-2 w-full">
+          <div className="flex items-center gap-1.5 mb-2 w-full h-5 shrink-0">
             <span className="w-12 shrink-0" />
             {HOUR_LABELS.map((label, idx) => (
               <span key={idx} className="flex-1 text-center text-[10px] sm:text-xs font-mono font-semibold text-[#A5A79B] select-none">
@@ -273,14 +263,14 @@ export default function PunchCard({
           </div>
 
           {/* 7 Days Matrix using Flex rows */}
-          <div className="space-y-1.5 w-full">
+          <div className="space-y-1.5 w-full shrink-0">
             {DISPLAY_DAYS.map((dayName, displayIndex) => {
               const dataDayIndex = DISPLAY_TO_DATA_IDX[displayIndex];
 
               return (
                 <div
                   key={dayName}
-                  className="flex items-center gap-1.5 w-full"
+                  className="flex items-center gap-1.5 w-full h-6 sm:h-7"
                 >
                   <span className="w-12 shrink-0 text-xs font-sans font-semibold text-[#A5A79B] text-right pr-2 select-none">
                     {dayName}
@@ -296,13 +286,17 @@ export default function PunchCard({
                       <div
                         key={hour}
                         onMouseEnter={() =>
-                          setHoveredCell({ dayName, hour, count })
+                          setHoveredCell({
+                            day: dayName,
+                            hour,
+                            hourLabel: formatHourString(hour),
+                            count,
+                          })
                         }
                         onMouseLeave={() => setHoveredCell(null)}
-                        className={`flex-1 h-6 sm:h-7 rounded cursor-pointer transition-all duration-150 ${getCellClasses(
+                        className={`flex-1 h-6 sm:h-7 rounded cursor-pointer transition-colors duration-150 ${getCellClasses(
                           count
-                        )} hover:scale-110 hover:z-10`}
-                        title={`${dayName} at ${formatHourString(hour)}: ${count} commits`}
+                        )} hover:ring-1 hover:ring-[#E8D2B5]`}
                       />
                     );
                   })}
@@ -311,9 +305,16 @@ export default function PunchCard({
             })}
           </div>
 
-          {/* Legend */}
-          <div className="flex items-center justify-between text-xs font-sans text-[#A5A79B] mt-4 pt-3 border-t border-[#A5A79B]/15">
-            <span>Commit Intensity</span>
+          {/* Legend & Telemetry Status */}
+          <div className="flex items-center justify-between text-xs font-sans text-[#A5A79B] mt-4 pt-3 border-t border-[#A5A79B]/15 h-9 shrink-0">
+            <div className="flex items-center gap-2">
+              <span>Commit Intensity</span>
+              {(totalCommitsInRange < 15 || !commitActivity || commitActivity.length === 0) && (commits?.length || 0) > 0 && (
+                <span className="text-[11px] font-mono text-[#A5A79B]/60 hidden md:inline">
+                  (Sparse telemetry clustered)
+                </span>
+              )}
+            </div>
             <div className="flex items-center gap-1.5 sm:gap-2">
               <span className="text-[10px] sm:text-[11px] font-mono">0</span>
               <div className="w-3 h-3 rounded bg-[#A5A79B]/10 border border-[#A5A79B]/15" />
