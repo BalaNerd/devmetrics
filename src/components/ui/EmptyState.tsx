@@ -124,7 +124,7 @@ export default function EmptyState({ type, message }: EmptyStateProps) {
             initial={{ opacity: 0, y: 12 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5, delay: 0.1 }}
-            className="text-4xl sm:text-6xl lg:text-7xl font-black tracking-tight leading-[1.08] font-heading"
+            className="text-4xl sm:text-6xl lg:text-7xl font-serif font-normal tracking-normal leading-[1.08]"
           >
             Analyze Repository Velocity &
             <br />

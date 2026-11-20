@@ -228,7 +228,7 @@ export default function LiveUrlAudit() {
                 HTTP {status} {statusText}
               </span>
             </div>
-            <h2 className="text-xl sm:text-2xl font-extrabold text-[#E8D2B5] font-sans">
+            <h2 className="text-3xl sm:text-4xl font-serif font-normal text-[#E8D2B5] tracking-tight">
               {title || hostname}
             </h2>
             <div className="flex items-center gap-3 text-xs text-[#A5A79B] font-mono flex-wrap">

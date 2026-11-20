@@ -1,31 +1,28 @@
 import type { Metadata } from 'next';
-import { Syne, Space_Grotesk, Inter, Space_Mono } from 'next/font/google';
+import { Instrument_Serif, Inter, IBM_Plex_Mono } from 'next/font/google';
 import './globals.css';
 import AppModals from '@/components/layout/AppModals';
 import { Analytics } from '@vercel/analytics/next';
 
-const syne = Syne({
+const instrumentSerif = Instrument_Serif({
+  weight: '400',
+  style: ['normal', 'italic'],
   subsets: ['latin'],
-  variable: '--font-syne',
-  display: 'swap',
-});
-
-const spaceGrotesk = Space_Grotesk({
-  subsets: ['latin'],
-  variable: '--font-space-grotesk',
+  variable: '--font-serif',
   display: 'swap',
 });
 
 const inter = Inter({
+  weight: ['400', '500', '600', '700'],
   subsets: ['latin'],
-  variable: '--font-inter',
+  variable: '--font-sans',
   display: 'swap',
 });
 
-const spaceMono = Space_Mono({
-  weight: ['400', '700'],
+const ibmPlexMono = IBM_Plex_Mono({
+  weight: ['400', '500', '600', '700'],
   subsets: ['latin'],
-  variable: '--font-space-mono',
+  variable: '--font-mono',
   display: 'swap',
 });
 
@@ -53,10 +50,10 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`${syne.variable} ${spaceGrotesk.variable} ${inter.variable} ${spaceMono.variable} dark`}
+      className={`${instrumentSerif.variable} ${inter.variable} ${ibmPlexMono.variable} dark`}
       suppressHydrationWarning
     >
-      <body className="min-h-screen bg-[#120909] text-[#E8D2B5] antialiased">
+      <body className="min-h-screen bg-[#120909] text-[#E8D2B5] font-sans antialiased">
         {children}
         <Analytics />
         <AppModals />

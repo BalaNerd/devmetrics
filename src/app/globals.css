@@ -28,15 +28,18 @@
   --border-burgundy:   rgba(89, 9, 7, 0.8);
 
   /* Fonts */
-  --font-display:      var(--font-syne), 'Syne', sans-serif;
-  --font-heading:      var(--font-space-grotesk), 'Space Grotesk', sans-serif;
-  --font-body:         var(--font-inter), 'Inter', system-ui, sans-serif;
-  --font-mono:         var(--font-space-mono), 'Space Mono', monospace;
+  --font-serif:        var(--font-serif), Georgia, serif;
+  --font-sans:         var(--font-sans), sans-serif;
+  --font-mono:         var(--font-mono), monospace;
+  --font-display:      var(--font-serif), Georgia, serif;
+  --font-heading:      var(--font-sans), sans-serif;
+  --font-body:         var(--font-sans), sans-serif;
 }
 
 @theme inline {
-  --font-sans: var(--font-inter), 'Inter', system-ui, sans-serif;
-  --font-mono: var(--font-space-mono), 'Space Mono', monospace;
+  --font-serif: var(--font-serif), Georgia, serif;
+  --font-sans: var(--font-sans), sans-serif;
+  --font-mono: var(--font-mono), monospace;
   --color-background: var(--bg-base);
   --color-foreground: var(--text-primary);
 }
@@ -55,7 +58,7 @@ html {
 body {
   background-color: #120909;
   color: #E8D2B5;
-  font-family: var(--font-body);
+  font-family: var(--font-sans), sans-serif;
   font-size: 15px;
   line-height: 1.65;
   -webkit-font-smoothing: antialiased;
@@ -94,10 +97,12 @@ body {
 }
 
 /* ─── Typography & Utilities ────────────────────────────────────────────────── */
-.font-display { font-family: var(--font-display) !important; }
-.font-heading { font-family: var(--font-heading) !important; }
-.font-body    { font-family: var(--font-body) !important; }
-.font-mono    { font-family: var(--font-mono) !important; }
+.font-serif   { font-family: var(--font-serif), Georgia, serif !important; }
+.font-sans    { font-family: var(--font-sans), sans-serif !important; }
+.font-mono    { font-family: var(--font-mono), monospace !important; font-variant-numeric: tabular-nums; }
+.font-display { font-family: var(--font-serif), Georgia, serif !important; }
+.font-heading { font-family: var(--font-sans), sans-serif !important; }
+.font-body    { font-family: var(--font-sans), sans-serif !important; }
 
 .gradient-text {
   background: linear-gradient(135deg, #ffffff 0%, #E8D2B5 55%, #A5A79B 100%);

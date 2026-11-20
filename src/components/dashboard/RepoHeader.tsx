@@ -52,8 +52,8 @@ export default function RepoHeader({ repo }: RepoHeaderProps) {
           {/* Repo Info */}
           <div className="min-w-0 flex-1 space-y-1 sm:space-y-1.5">
             <div className="flex items-center gap-2 sm:gap-2.5 flex-wrap">
-              <h1 className="text-xl sm:text-2xl font-bold text-[#E8D2B5] font-sans break-words tracking-tight leading-snug">
-                <span className="text-[#A5A79B]/80 font-normal">{repo.owner.login}</span>
+              <h1 className="text-3xl sm:text-4xl font-serif font-normal text-[#E8D2B5] break-words tracking-tight leading-snug">
+                <span className="text-[#A5A79B]/80">{repo.owner.login}</span>
                 <span className="text-[#590907] mx-1.5 font-mono font-light">/</span>
                 <span>{repo.name}</span>
               </h1>

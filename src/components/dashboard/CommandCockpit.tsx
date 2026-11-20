@@ -130,7 +130,7 @@ export default function CommandCockpit() {
           DEV_METRICS TELEMETRY DISPATCH v1.0
         </span>
 
-        <h1 className="text-3xl sm:text-4xl md:text-5xl font-extrabold tracking-tight text-[#E8D2B5] font-sans text-center max-w-3xl mx-auto leading-[1.12]">
+        <h1 className="text-4xl sm:text-5xl md:text-6xl font-serif font-normal tracking-normal text-[#E8D2B5] text-center max-w-3xl mx-auto leading-[1.12]">
           Inspect Codebase Velocity &amp; Infrastructure.
         </h1>
 
